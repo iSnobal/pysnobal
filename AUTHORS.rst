@@ -2,13 +2,14 @@
 Credits
 =======
 
-Development Lead
-----------------
-
-* Scott Havens <scott.havens@ars.usda.gov>
-
 Contributors
 ------------
-* Micah Sandusky <micah.sandusky@ars.usda.gov>
+* `Micah Sandusky <https://github.com/micah-prime>`_
+* `Joachim Meyer <https://github.com/jomey>`_
 
+..
 
+Past Contributors
+-----------------
+
+* `Scott Havens <https://github.com/scotthavens>`_

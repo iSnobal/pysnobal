@@ -66,13 +66,11 @@ setup(
     description="Python wrapper of the Snobal mass and "
                 "energy balance snow model",
     long_description=readme + '\n\n' + history,
-    author="Scott Havens",
-    author_email='scott.havens@ars.usda.gov',
+    author="iSnobal Community",
     url='https://github.com/USDA-ARS-NWRC/pysnobal',
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=requirements,
-    license="CC0 1.0",
     zip_safe=False,
     keywords='pysnobal',
     classifiers=[
