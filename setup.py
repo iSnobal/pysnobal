@@ -14,9 +14,6 @@ from Cython.Distutils import build_ext
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
 requirements = [
     # TODO: put package requirements here
 ]
@@ -62,12 +59,11 @@ extensions = [
 
 setup(
     name='pysnobal',
-    version='0.2.0',
     description="Python wrapper of the Snobal mass and "
                 "energy balance snow model",
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     author="iSnobal Community",
-    url='https://github.com/USDA-ARS-NWRC/pysnobal',
+    url='https://github.com/iSnobal/pysnobal',
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=requirements,
