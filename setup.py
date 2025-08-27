@@ -1,46 +1,41 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import glob
-import os
 import sys
 
-import numpy
+import numpy as np
 from setuptools import setup, Extension
-from Cython.Distutils import build_ext
+from setuptools.command.build_ext import build_ext as build_ext
+from Cython.Build import cythonize
 
-# Allow user to specify a compiler; default to gcc if not provided
-os.environ.setdefault("CC", "gcc")
-
-# macOS: adjust linker flags for shared libs
 if sys.platform == "darwin":
-    from distutils import sysconfig
-    vars = sysconfig.get_config_vars()
-    if vars.get("LDSHARED"):
-        vars["LDSHARED"] = vars["LDSHARED"].replace("-bundle", "-dynamiclib")
+    extra_compile_args = ["-Xpreprocessor", "-fopenmp", "-O3"]
+    extra_link_args = ["-lomp"]
+else:
+    extra_compile_args = ["-fopenmp", "-O3"]
+    extra_link_args = ["-fopenmp"]
 
-# Collect sources
-c_sources = glob.glob("pysnobal/c_snobal/libsnobal/*.c")
-pyx_source = "pysnobal/c_snobal/snobal.pyx"
-sources = c_sources + [pyx_source]
-
-extra_cc_args = ["-fopenmp", "-O3", "-L./pysnobal"]
+sources = glob.glob(
+    "pysnobal/c_snobal/libsnobal/*.c"
+) + [
+    "pysnobal/c_snobal/snobal.pyx"
+]
 
 extensions = [
     Extension(
         "pysnobal.c_snobal.snobal",
         sources=sources,
         include_dirs=[
-            numpy.get_include(),
+            np.get_include(),
             "pysnobal/c_snobal",
             "pysnobal/c_snobal/h",
         ],
-        extra_compile_args=extra_cc_args,
-        extra_link_args=extra_cc_args,
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
     )
 ]
 
 setup(
     cmdclass={"build_ext": build_ext},
-    ext_modules=extensions,
+    ext_modules=cythonize(extensions, language_level="3"),
 )
