@@ -1,6 +1,11 @@
 # Version file
 pysnobal/version.py
 
+# Cython
+# Ignore generated files
+# https://cython.readthedocs.io/en/stable/src/userguide/source_files_and_compilation.html#distributing-cython-modules
+pysnobal/c_snobal/snobal.c
+
 .DS_Store
 .editorconfig
 .project
