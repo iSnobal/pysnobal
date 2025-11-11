@@ -369,6 +369,10 @@
 /*
  * Library functions.
  */
+typedef struct {
+    int return_code;
+    double remainder;
+} LoopResult;
 
 extern double	bevap(double netrad, double advec, double bowen,
 		      double storage, double ts);
@@ -384,7 +388,7 @@ extern double	dew_pointp(double e, double tol);
 extern double	efcon(double k, double t, double p);
 extern double	evap(double le, double ts);
 extern double	heat_stor(double cp, double spm, double tdif);
-extern int      hle1(double press, double ta, double ts, double za,
+extern LoopResult hle1(double press, double ta, double ts, double za,
 		     double ea, double es, double zq, double u, double zu,
 		     double z0, double *h, double *le, double *e);
 extern double   psychrom(double tdry, double twet, double press);

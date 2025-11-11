@@ -1,275 +1,232 @@
+/**
+Sensible and latent heat fluxes at one height
+
+Computes sensible and latent heat flux and mass flux given measurements of temperature
+and specific humidity at surface and one height, wind speed at one height, and
+roughness length.
+The temperature, humidity, and wind speed measurements need not all be at the same height.
+
+See also:
+  Brutsaert, W., 1982. Evaporation Into the Atmosphere, D. Reidel, Hingham, Mass, 299 pp.
+*/
+
 #include <math.h>
 
-//#include "ipw.h"
 #include "envphys.h"
+#include "error_logging.h"
 
-#define AH		1.0	/* ratio sensible/momentum phi func	*/
-#define AV		1.0	/* ratio latent/momentum phi func	*/
-#define ITMAX		50	/* max # iterations allowed		*/
-#define PAESCHKE	7.35	/* Paeschke's const (eq. 5.3)		*/
-#define THRESH		1.e-5	/* convergence threshold		*/
+const double AH = 1.0;         /* ratio sensible/momentum phi func	*/
+const double AV = 1.0;         /* ratio latent/momentum phi func	*/
+const int MAX_ITERATIONS = 50; /* max # iterations allowed		*/
+const double PAESCHKE = 7.35;  /* Paeschke's const (eq. 5.3)		*/
+const double THRESH = 1.e-5;   /* convergence threshold		*/
 
-#define SM		0
-#define SH		1
-#define SV		2
-#define BETA_S		5.2
-#define BETA_U		16
+// PSI functions types
+typedef enum {
+    FLUX_MOMENTUM = 0, // Sensible/Momentum
+    FLUX_SENSIBLE = 1, // Sensible heat flux
+    FLUX_LATENT = 2    // Latent heat flux
+} FluxType;
 
-/* ----------------------------------------------------------------------- */
+const double BETA_S = 5.2;
+const double BETA_U = 16.0;
 
 /*
- * psi-functions
- *	code =	SM	momentum
- *		SH	sensible heat flux
- *		SV	latent heat flux
- */
+Equations 4.92
 
-static double
-psi(
-		double	zeta,		/* z/lo				*/
-		int	code)		/* which psi function? (see above) */
-{
-	double	x;		/* height function variable	*/
-	double	result;
+@param zeta z/lo
+@param code One of the code options from above constants
+@return psi-function value
+*/
+static double psi(double zeta, FluxType type) {
+    double x; // height function variable
+    double result;
 
-	if (zeta > 0) {		/* stable */
-		if (zeta > 1)
-			zeta = 1;
-		result = -BETA_S * zeta;
-	}
+    // Stable case
+    if (zeta > 0) {
+        if (zeta > 1)
+            zeta = 1;
+        result = -BETA_S * zeta;
+    }
+    // Unstable case
+    else if (zeta < 0) {
 
-	else if (zeta < 0) {	/* unstable */
+        x = sqrt(sqrt(1 - BETA_U * zeta));
 
-		x = sqrt(sqrt(1 - BETA_U * zeta));
+        switch (type) {
+            case FLUX_MOMENTUM:
+                result = 2 * log((1 + x) / 2) + log((1 + x * x) / 2) - 2 * atan(x) + M_PI_2;
+                break;
 
-		switch (code) {
-		case SM:
-			result = 2 * log((1+x)/2) + log((1+x*x)/2) -
-			2 * atan(x) + M_PI_2;
-			break;
+            case FLUX_SENSIBLE:
+            case FLUX_LATENT:
+                result = 2 * log((1 + x * x) / 2);
+                break;
 
-		case SH:
-		case SV:
-			result = 2 * log((1+x*x)/2);
-			break;
+            default:
+                LOG_ERROR("Invalid PSI-function code passed in: %i", type);
+                exit(EXIT_FAILURE);
+        }
+    }
+    // Neutral case
+    else {
+        result = 0;
+    }
 
-		default: /* shouldn't reach */
-//			bug("psi-function code not of these: SM, SH, SV");
-			fprintf(stderr, "psi-function code not of these: SM, SH, SV");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	else {			/* neutral */
-		result = 0;
-	}
-
-	return (result);
+    return result;
 }
 
-/* ----------------------------------------------------------------------- */
-
-int
-hle1(
-		double	press,	/* air pressure (Pa)			*/
-		double	ta,	/* air temperature (K) at height za	*/
-		double	ts,	/* surface temperature (K)		*/
-		double	za,	/* height of air temp measurement (m)	*/
-		double	ea,	/* vapor pressure (Pa) at height zq	*/
-		double	es,	/* vapor pressure (Pa) at surface	*/
-		double	zq,	/* height of spec hum measurement (m)	*/
-		double	u,	/* wind speed (m/s) at height zu	*/
-		double	zu,	/* height of wind speed measurement (m)	*/
-		double	z0,	/* roughness length (m)			*/
-
-		/* output variables */
-
-		double *h,	/* sens heat flux (+ to surf) (W/m^2)	*/
-		double *le,	/* latent heat flux (+ to surf) (W/m^2)	*/
-		double *e)	/* mass flux (+ to surf) (kg/m^2/s)	*/
+LoopResult hle1(
+    double press, /* air pressure (Pa)			*/
+    double ta,    /* air temperature (K) at height za	*/
+    double ts,    /* surface temperature (K)		*/
+    double za,    /* height of air temp measurement (m)	*/
+    double ea,    /* vapor pressure (Pa) at height zq	*/
+    double es,    /* vapor pressure (Pa) at surface	*/
+    double zq,    /* height of spec hum measurement (m)	*/
+    double u,     /* wind speed (m/s) at height zu	*/
+    double zu,    /* height of wind speed measurement (m)	*/
+    double z0,    /* roughness length (m)			*/
+    /* output variables */
+    double *h,  /* sens heat flux (+ to surf) (W/m^2)	*/
+    double *le, /* latent heat flux (+ to surf) (W/m^2)	*/
+    double *e
+) /* mass flux (+ to surf) (kg/m^2/s)	*/
 {
-	double	ah = AH;
-	double	av = AV;
-	double	cp = CP_AIR;
-	double	d0;	/* displacement height (eq. 5.3)	*/
-	double	dens;	/* air density				*/
-	double	diff;	/* difference between guesses		*/
-	double	factor;
-	double	g = GRAVITY;
-	double	k = VON_KARMAN;
-	double	last;	/* last guess at lo			*/
-	double	lo;	/* Obukhov stability length (eq. 4.25)	*/
-	double	ltsh;	/* log ((za-d0)/z0)			*/
-	double	ltsm;	/* log ((zu-d0)/z0)			*/
-	double	ltsv;	/* log ((zq-d0)/z0)			*/
-	double	qa;	/* specific humidity at height zq	*/
-	double	qs;	/* specific humidity at surface		*/
-	double	ustar;	/* friction velocity (eq. 4.34')	*/
-	double	xlh;	/* latent heat of vap/subl		*/
-	int	ier;	/* return error code			*/
-	int	iter;	/* iteration counter			*/
+    double ah = AH;
+    double av = AV;
+    double cp = CP_AIR;
+    double d0;   // displacement height (eq. 5.3)
+    double dens; // air density
+    double factor;
+    double g = GRAVITY;
+    double k = VON_KARMAN;
+    double last;  // last guess at lo
+    double lo;    // Obukhov stability length (eq. 4.25)
+    double ltsh;  // log ((za-d0)/z0)
+    double ltsm;  // log ((zu-d0)/z0)
+    double ltsv;  // log ((zq-d0)/z0)
+    double qa;    // specific humidity at height zq
+    double qs;    // specific humidity at surface
+    double ustar; // friction velocity (eq. 4.34')
+    double xlh;   // latent heat of vap/subl
+    int iter;     // iteration counter
 
-	/*
-	 * check for bad input
-	 */
+    LoopResult result = {.return_code = 0, .remainder = 0.0};
 
-	/* heights must be positive */
-	if (z0 <= 0 || zq <= z0 || zu <= z0 || za <= z0) {
-//		usrerr ("height not positive; z0=%f\tzq=%f\tzu=%\tza=%f",
-//				z0, zq, zu, za);
-		fprintf(stderr, "height not positive\n");
-		fprintf(stderr, "z0=%f\n", z0);
-		fprintf(stderr, "za=%f\n", za);
-		fprintf(stderr, "zu=%f\n", zu);
-//		zq=%f zu=% za=%f", z0, zq, zu, za);
-		ier = -2;
-		return (ier);
-	}
+    // Check inputs
+    if (z0 <= 0 || zq <= z0 || zu <= z0 || za <= z0) {
+        LOG_ERROR("Configured heights not positive\n\t z0: %f \t za: %f \t zu: %f", z0, za, zu);
+        result.return_code = -2;
+    }
 
-	/* temperatures are Kelvin */
-	if (ta <= 0 || ts <= 0) {
-//		usrerr ("temps not K; ta=%f\tts=%f", ta, ts);
-		fprintf(stderr, "temps not K; ta=%f\tts=%f", ta, ts);
-		ier = -2;
-		return (ier);
-	}
+    if (ta <= 0 || ts <= 0) {
+        LOG_ERROR("Temperatures are not in K\n\t ta: %f \t ts: %f", ta, ts);
+        result.return_code = -2;
+    }
 
-	/* pressures must be positive */
-	if (ea <= 0 || es <= 0 || press <= 0 || ea >= press || es >= press) {
-//		usrerr ("press < 0; ea=%f\tes=%f\tpress=%f", ea, es, press);
-		fprintf(stderr, "press < 0; ea=%f\tes=%f\tpress=%f", ea, es, press);
-		ier = -2;
-		return (ier);
-	}
+    if (ea <= 0 || es <= 0 || press <= 0 || ea >= press || es >= press) {
+        LOG_ERROR("Pressure values below 0\n\t ea: %f \t es: %f \t press: %f", ea, es, press);
+        result.return_code = -2;
+    }
 
-	/* vapor pressures can't exceed saturation */
-	/* if way off stop */
-	if ((es - 25.0) > sati(ts) || (ea - 25.0) > satw(ta)) {
-//		usrerr ("vp > sat; es=%f\tessat=%f\tea=%f\teasat=%f",
-//				es, sati(ts), ea, sati(ta));
-		fprintf(stderr, "vp > sat; es=%f\tessat=%f\tea=%f\teasat=%f",
-				es, sati(ts), ea, sati(ta));
-		ier = -2;
-		return (ier);
-	}
-	/* else fix them up */
-	if (es > sati(ts)) {
-		es = sati(ts);
-	}
-	if (ea > satw(ta)) {
-		ea = satw(ta);
-	}
+    /* Vapor pressures can't exceed saturation vapor pressures by 25 */
+    if ((es - 25.0) > sati(ts) || (ea - 25.0) > satw(ta)) {
+        LOG_ERROR(
+            "Vapor pressure exceeded saturation pressure\n\t es: %f \t es_sat: %f \t ea: %f \t"
+            "ea_sat: %f",
+            es,
+            sati(ts),
+            ea,
+            sati(ta)
+        );
+        result.return_code = -2;
+    }
+    // Exit if there were any input errors
+    if (result.return_code < 0) {
+        return result;
+    }
 
-	/*
-	 * displacement plane height, eq. 5.3 & 5.4
-	 */
+    // Adjust pressures if they were within tolerance
+    if (es > sati(ts)) {
+        es = sati(ts);
+    }
+    if (ea > satw(ta)) {
+        ea = satw(ta);
+    }
 
-	d0 = 2 * PAESCHKE * z0 / 3;
+    // Displacement plane height, eq. 5.3 & 5.4
+    d0 = 2 * PAESCHKE * z0 / 3;
 
-	/*
-	 * constant log expressions
-	 */
+    // Constant log expressions to save compute time
+    ltsm = log((zu - d0) / z0);
+    ltsh = log((za - d0) / z0);
+    ltsv = log((zq - d0) / z0);
 
-	ltsm = log((zu - d0) / z0);
-	ltsh = log((za - d0) / z0);
-	ltsv = log((zq - d0) / z0);
+    // Convert vapor pressures to specific humidities
+    qa = SPEC_HUM(ea, press);
+    qs = SPEC_HUM(es, press);
 
-	/*
-	 * convert vapor pressures to specific humidities
-	 */
-	qa = SPEC_HUM(ea, press);
-	qs = SPEC_HUM(es, press);
+    // Convert temperature to potential temperature
+    ta += DALR * za;
 
-	/*
-	 * convert temperature to potential temperature
-	 */
+    /*
+     * Air density at pressure, virtual temperature of geometric mean of air and surface
+     */
+    dens = GAS_DEN(press, MOL_AIR, VIR_TEMP(sqrt(ta * ts), sqrt(ea * es), press));
 
-	ta += DALR * za;
+    /*
+     * Starting value - assume neutral stability, so psi-functions are all zero
+     */
+    ustar = k * u / ltsm;
+    factor = k * ustar * dens;
+    *e = (qa - qs) * factor * av / ltsv;
+    *h = (ta - ts) * factor * cp * ah / ltsh;
 
-	/*
-	 * air density at press, virtual temp of geometric mean
-	 * of air and surface
-	 */
+    /*
+     * If not neutral stability, iterate on Obukhov stability length to find solution
+     * Follows Chapter 4.2 in Brutsaert, 1982
+     */
+    iter = 0;
+    if (ta != ts) {
 
-	dens = GAS_DEN(press, MOL_AIR,
-			VIR_TEMP(sqrt(ta*ts), sqrt(ea*es), press));
+        lo = HUGE_VAL;
 
-	/*
-	 * starting value, assume neutral stability, so psi-functions
-	 * are all zero
-	 */
+        do {
+            last = lo;
 
-	ustar = k * u / ltsm;
-	factor = k * ustar * dens;
-	*e = (qa - qs) * factor * av / ltsv;
-	*h = (ta - ts) * factor * cp * ah / ltsh;
+            /*
+             * Eq 4.25, but no minus sign as we define positive H as toward surface
+             *
+             * There was an error in the old version of this line that omitted the cubic power of
+             * ustar. Now, this error has been fixed.
+             */
+            lo = ustar * ustar * ustar * dens / (k * g * (*h / (ta * cp) + 0.61 * *e));
 
-	/*
-	 * if not neutral stability, iterate on Obukhov stability
-	 * length to find solution
-	 */
+            // Friction velocity, eq. 4.34'
+            ustar = k * u / (ltsm - psi(zu / lo, FLUX_MOMENTUM));
 
-	iter = 0;
-	if (ta != ts) {
+            // Evaporative flux, eq. 4.33'
+            factor = k * ustar * dens;
+            *e = (qa - qs) * factor * av / (ltsv - psi(zq / lo, FLUX_LATENT));
 
-		lo = HUGE_VAL;
+            // Sensible heat flux, eq. 4.35' with sign reversed
+            *h = (ta - ts) * factor * ah * cp / (ltsh - psi(za / lo, FLUX_SENSIBLE));
 
-		do {
-			last = lo;
+            result.remainder = last - lo;
 
-			/*
-			 * Eq 4.25, but no minus sign as we define
-			 * positive H as toward surface
-			 */
+        } while (fabs(result.remainder) > THRESH && fabs(result.remainder / lo) > THRESH
+                 && ++iter < MAX_ITERATIONS);
+    }
 
-			/*
-			 * There was an error in the old version of this
-			 * line that omitted the cubic power of ustar.
-			 * Now, this error has been fixed.
-			 */
+    result.return_code = (iter >= MAX_ITERATIONS) ? -1 : 0;
 
-			lo = ustar * ustar * ustar * dens 
-					/ (k * g * (*h/(ta*cp) + 0.61 * *e));
+    xlh = LH_VAP(ts);
+    if (ts <= FREEZE)
+        xlh += LH_FUS(ts);
 
-			/*
-			 * friction velocity, eq. 4.34'
-			 */
+    // Latent heat flux (- away from surf)
+    *le = xlh * *e;
 
-			ustar = k * u / (ltsm - psi(zu/lo, SM));
-
-			/*
-			 * evaporative flux, eq. 4.33'
-			 */
-
-			factor = k * ustar * dens;
-			*e = (qa - qs) * factor * av /
-					(ltsv - psi(zq/lo, SV));
-
-			/*
-			 * sensible heat flus, eq. 4.35'
-			 * with sign reversed
-			 */
-
-			*h = (ta - ts) * factor * ah * cp /
-					(ltsh - psi(za/lo, SH));
-
-			diff = last - lo;
-
-		} while (fabs(diff) > THRESH &&
-				fabs(diff/lo) > THRESH &&
-				++iter < ITMAX);
-	}
-
-	ier = (iter >= ITMAX)? -1 : 0;
-
-	xlh = LH_VAP(ts);
-	if (ts <= FREEZE)
-		xlh += LH_FUS(ts);
-
-	/*
-	 * latent heat flux (- away from surf)
-	 */
-	*le = xlh * *e;
-
-	return (ier);
+    return result;
 }

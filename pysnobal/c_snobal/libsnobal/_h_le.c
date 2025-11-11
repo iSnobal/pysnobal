@@ -36,6 +36,7 @@ int _h_le(void) {
     double sat_vp;
     double rel_z_T;
     double rel_z_u;
+    LoopResult hle1_result;
 
     /* calculate saturation vapor pressure */
     e_s = sati(T_s_0);
@@ -60,16 +61,18 @@ int _h_le(void) {
     }
 
     /* calculate H & L_v_E */
-    if (hle1(P_a, T_a, T_s_0, rel_z_T, e_a, e_s, rel_z_T, u, rel_z_u, z_0, &H, &L_v_E, &E) != 0) {
+    hle1_result = hle1(P_a, T_a, T_s_0, rel_z_T, e_a, e_s, rel_z_T, u, rel_z_u, z_0, &H, &L_v_E, &E);
+    if (hle1_result.return_code != 0) {
         LOG_ERROR(
             "hle1 did not converge \n"
             "P_a: %f \n "
-            "T_a: %f \n "
-            "T_s_0: %f "
-            "e_a: %f "
-            "e_s: %f "
-            "u: %f",
-            P_a, T_a, T_s_0, e_a, e_s, u, z_0
+            "T_a: %f \t "
+            "T_s_0: %f \n "
+            "e_a: %f \t "
+            "e_s: %f \n "
+            "u: %f \n"
+            "last difference: %f",
+            P_a, T_a, T_s_0, e_a, e_s, u, z_0, hle1_result.remainder
         );
 
         return FALSE;
