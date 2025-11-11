@@ -10,6 +10,7 @@
 #include "snobal.h"
 #include "envphys.h"
 #include "pysnobal.h"
+#include "error_logging.h"
 
 int call_snobal (
 		int N,
@@ -75,8 +76,8 @@ int call_snobal (
 			   'snobal' library for each pass since
 			   the routine 'do_data_tstep' modifies them */
 
-				current_time = output1->current_time[n];//output_rec[n]->current_time;
-				time_since_out = output1->time_since_out[n];//output_rec[n]->time_since_out;
+				current_time = output1->current_time[n];  //output_rec[n]->current_time;
+				time_since_out = output1->time_since_out[n];  //output_rec[n]->time_since_out;
 
 				// get the input records
 				input_rec1.I_lw = input1->I_lw[n];
@@ -169,7 +170,7 @@ int call_snobal (
 				/* run model on data for this pixel */
 				//printf("m_s = %f, rho = %f\n", m_s, rho);
 				if (! do_data_tstep())
-					fprintf(stderr, "Error at pixel %i", n);
+					LOG_ERROR("Error processing pixel %d", n);
 				//printf("m_s = %f, rho = %f, N = %d, n=%d\n", m_s, rho, N, n);
 				/* assign data to output buffers */
 				//			current_time += data_tstep;
