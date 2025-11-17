@@ -1,39 +1,45 @@
 #include <errno.h>
 #include <math.h>
 
-//#include "ipw.h"
 #include "envphys.h"
+#include "error_logging.h"
 
-double
-sati(
-		double  tk)		/* air temperature (K)	*/
-{
-	double  l10;
-	double  x;
+/**
+Saturation vapor pressure of ice
 
-	if (tk <= 0.) {
-		fprintf(stderr, "tk=%f\n, less than zero", tk);
-//		assert(tk > 0.);
-		exit(EXIT_FAILURE);
-	}
+@param tk Input temperature [K]
+*/
+double sati(double tk) {
+    double l10;
+    double x;
 
-	if (tk > FREEZE) {
-		x = satw(tk);
-		return(x);
-	}
+    if (tk <= 0.) {
+        LOG_ERROR("Input temperature (tk): %f is less than zero", tk);
+        exit(EXIT_FAILURE);
+    }
 
-	errno = 0;
-	l10 = log(1.e1);
+    if (tk > FREEZE) {
+        x = satw(tk);
+        return (x);
+    }
 
-	x = pow(1.e1,-9.09718*((FREEZE/tk)-1.) - 3.56654*log(FREEZE/tk)/l10 +
-			8.76793e-1*(1.-(tk/FREEZE)) + log(6.1071)/l10);
+    errno = 0;
+    l10 = log(1.e1);
 
-	if (errno) {
-		perror("sati: bad return from log or pow");
-		exit(EXIT_FAILURE);
-//		syserr();
-//		error("sati: bad return from log or pow");
-	}
+    // clang-format off
+    x = pow(
+        1.e1,
+        -9.09718 * ((FREEZE / tk) - 1.)
+        - 3.56654 * log(FREEZE / tk) / l10
+        + 8.76793e-1 * (1. - (tk / FREEZE))
+        + log(6.1071) / l10
+    );
+    // clang-format on
 
-	return(x*1.e2);
+    if (errno) {
+        LOG_ERROR("Bad return from log or pow");
+        exit(EXIT_FAILURE);
+    }
+
+    return (x * 1.e2);
 }

@@ -7,7 +7,7 @@
 **
 **      int
 **	_below_thold(
-**	    double  threshold)	|* current timestep's threshold for a 
+**	    double  threshold)	|* current timestep's threshold for a
 **				   layer's mass *|
 **
 ** DESCRIPTION
@@ -28,19 +28,20 @@
 ** GLOBAL VARIABLES MODIFIED
 */
 
-//#include        "ipw.h"
-#include        "_snobal.h"
-#include        "envphys.h"
+#include "_snobal.h"
+#include "envphys.h"
 
-int
-_below_thold(
-	double	threshold)	/* current timestep's threshold for a 
-				   layer's mass */
-{
-	if (layer_count == 0)
-		return 0;
-	if (layer_count == 1)
-		return (m_s < threshold);
-	else  /* layer_count == 2 */
-		return ((m_s_0 < threshold) || (m_s_l < threshold));
+/**
+ *
+ * @param threshold Current timestep's threshold for a layer's mass.
+ *
+ * @return 1 if a layer's mass is less than the threshold, 0 otherwise.
+ */
+int _below_thold(double threshold) {
+    if (layer_count == 0)
+        return 0;
+    if (layer_count == 1)
+        return (m_s < threshold);
+    else /* layer_count == 2 */
+        return ((m_s_0 < threshold) || (m_s_l < threshold));
 }

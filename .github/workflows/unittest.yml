@@ -1,0 +1,66 @@
+name: Unittest
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+    paths-ignore:
+      - LICENSE
+      - '**.md'
+      - '**.rst'
+      - .gitignore
+      - .editorconfig
+      - .clang-format
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unittest:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Disable OS X until a user has run unittests locally
+        # os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: gcc-11
+      GCC_VERSION: 11
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download environment file
+        run: |
+          wget https://raw.githubusercontent.com/iSnobal/model_setup/refs/heads/main/conda/isnobal.yaml
+
+      - name: Install and set GCC as default on Ubuntu
+        if: runner.os == 'Linux' && steps.cache-gcc.outputs.cache-hit != 'false'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-${{ env.GCC_VERSION }} g++-${{ env.GCC_VERSION }}
+          # Update alternatives for system-wide default
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VERSION }} 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ env.GCC_VERSION }} 100
+          # Check
+          gcc --version
+          g++ --version
+        shell: bash
+
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: isnobal.yaml
+          init-shell: bash
+          cache-environment: true
+          cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles('isnobal.yaml') }}
+
+      - name: Run unittests
+        run: |
+          micromamba run -n isnobal make build
