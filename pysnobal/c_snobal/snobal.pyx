@@ -4,26 +4,15 @@ Wrapper functions to the C function in libsnobal
 20161010 Scott Havens
 """
 import cython
-from cython.parallel import prange, parallel
 import numpy as np
 cimport numpy as np
 
-from libc.stdlib cimport abort, calloc, malloc
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-
-from libc.stdlib cimport free
-from cpython cimport PyObject, Py_INCREF
+from libc.stdlib cimport abort
 
 
 # Numpy must be initialized. When using numpy from C or Cython you must
 # _always_ do that, or you will have segfaults
 np.import_array()
-
-cdef extern from "time.h":
-    ctypedef unsigned long clock_t
-    cdef clock_t clock()
-    cdef enum:
-        CLOCKS_PER_SEC
 
 cdef extern from "snobal.h":
     void init_snow();
@@ -108,31 +97,8 @@ cdef extern from "envphys.h":
     cdef double MOL_AIR;
     cdef double HYSTAT(double pb, double tb, double L, double h, double g, double m);
 
-# ctypedef struct OUTPUT_REC:
-#         int masked;
-#         double elevation;
-#         double z_0;
-#         double z_s;
-#         double rho;
-#         double T_s_0;
-#         double T_s_l;
-#         double T_s;
-#         double h2o_sat;
-#         int layer_count;
-#         double R_n_bar;
-#         double H_bar;
-#         double L_v_E_bar;
-#         double G_bar;
-#         double G_0_bar;
-#         double M_bar;
-#         double delta_Q_bar;
-#         double delta_Q_0_bar;
-#         double E_s_sum;
-#         double melt_sum;
-#         double ro_pred_sum;
 
 cdef extern from "pysnobal.h":
-    #cdef int call_snobal(int N, int nthreads, int first_step, TSTEP_REC tstep_info[4], OUTPUT_REC** output_rec, INPUT_REC_ARR* input1, INPUT_REC_ARR* input2, PARAMS params, OUTPUT_REC_ARR* output1);
     cdef int call_snobal(int N, int nthreads, int first_step, TSTEP_REC tstep_info[4], INPUT_REC_ARR* input1, INPUT_REC_ARR* input2, PARAMS params, OUTPUT_REC_ARR* output1);
 
     ctypedef struct OUTPUT_REC:
@@ -229,8 +195,6 @@ cdef extern from "pysnobal.h":
         double max_h2o_vol;
         double max_z_s_0;
 
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 # https://github.com/cython/cython/wiki/tutorials-NumpyPointerToC
@@ -241,13 +205,9 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     pulled in an initialized. Therefore only the values need to be pulled
     out before calling 'init_snow()'
     """
-    #cdef int N = len(output_rec['elevation'])
     cdef int N = (output_rec['elevation']).size
     cdef int n
     shp = output_rec['elevation'].shape
-    # timing stuff
-    cdef clock_t start1, end1, start2, end2, start3, end3
-    cdef double cpu_time_used1, cpu_time_used2, cpu_time_used3
 
     # measurement heights and parameters
     cdef PARAMS c_params
@@ -257,14 +217,6 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     c_params.relative_heights = int(params['relative_heights'])
     c_params.max_h2o_vol = params['max_h2o_vol']
     c_params.max_z_s_0 = params['max_z_s_0']
-#
-
-
-#     cdef TSTEP_REC tstep_info[4]
-#     cdef TSTEP_REC **tstep_info = <TSTEP_REC**> PyMem_Malloc(4 * sizeof(TSTEP_REC*));
-#     for n in range(N):
-#         tstep_info[n] = <TSTEP_REC *>PyMem_Malloc(sizeof(TSTEP_REC))
-#         tstep_info[n].level = n
 
     for i in range(len(tstep_rec)):
         tstep_info[i].level = int(tstep_rec[i]['level'])
@@ -276,7 +228,6 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
             tstep_info[i].threshold = tstep_rec[i]['threshold']
         tstep_info[i].output = int(tstep_rec[i]['output'])
 
-    # start1 = clock()
     cdef OUTPUT_REC_ARR output1_c
 
     cdef np.ndarray[double, mode="c", ndim=2] output1_z_0
@@ -419,13 +370,6 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     output1_ro_pred_sum = np.ascontiguousarray(output_rec['ro_pred_sum'], dtype=np.float64)
     output1_c.ro_pred_sum = &output1_ro_pred_sum[0,0]
 
-    # end1 = clock()
-    # cpu_time_used1 = (<double> (end1 - start1)) / CLOCKS_PER_SEC
-    # print('time 1 {}'.format(cpu_time_used1))
-    # start15 = clock()
-    #------------------------------------------------------------------------------
-    # PREPARE INPUT1 FOR C
-
     cdef INPUT_REC_ARR input1_c
 
     # convert the S_n to C
@@ -514,23 +458,11 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     input2_T_g = np.ascontiguousarray(input2['T_g'], dtype=np.float64)
     input2_c.T_g = &input2_T_g[0,0]
 
-    # timing stuff
-    # end15 = clock()
-    # cpu_time_used15 = (<double> (end15 - start15)) / CLOCKS_PER_SEC
-    # print('time 1.5 {}'.format(cpu_time_used15))
-    # start2 = clock()
-
-    #------------------------------------------------------------------------------
-    # Call the model
-    # rt = call_snobal(N, nthreads, first_step, tstep_info, out_c, &input1_c, &input2_c, c_params, &output1_c)
+    # Run the model
     rt = call_snobal(N, nthreads, first_step, tstep_info, &input1_c, &input2_c, c_params, &output1_c)
+
     if rt != -1:
         return rt
-
-    # end2 = clock()
-    # cpu_time_used2 = (<double> (end2 - start2)) / CLOCKS_PER_SEC
-    # print('time 2 {}'.format(cpu_time_used2))
-    # start3 = clock()
 
     cdef np.npy_intp shp_np[2]
     shp_np[:] = (shp[0], shp[1])
@@ -572,63 +504,8 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     output_rec['melt_sum'][:] = np.PyArray_SimpleNewFromData(2, shp_np, np.NPY_FLOAT64, output1_c.melt_sum)
     output_rec['ro_pred_sum'][:] = np.PyArray_SimpleNewFromData(2, shp_np, np.NPY_FLOAT64, output1_c.ro_pred_sum)
 
-    # end3 = clock()
-    # cpu_time_used3 = (<double> (end3 - start3)) / CLOCKS_PER_SEC
-    # print('time 3 {}'.format(cpu_time_used3))
-
     return rt
 
-
-
-
-# We need to build an array-wrapper class to deallocate our array when
-# the Python object is deleted.
-# From https://gist.github.com/GaelVaroquaux/1249305
-cdef class ArrayWrapper:
-    cdef void* data_ptr
-    cdef int size
-
-    cdef set_data(self, int size, void* data_ptr):
-        """ Set the data of the array
-        This cannot be done in the constructor as it must recieve C-level
-        arguments.
-        Parameters:
-        -----------
-        size: int
-            Length of the array.
-        data_ptr: void*
-            Pointer to the data
-        """
-        self.data_ptr = data_ptr
-        self.size = size
-
-    def __array__(self):
-        """ Here we use the __array__ method, that is called when numpy
-            tries to get an array from the object."""
-        cdef np.npy_intp shape[1]
-        shape[0] = <np.npy_intp> self.size
-        # Create a 1D array, of length 'size'
-        ndarray = np.PyArray_SimpleNewFromData(1, shape,
-                                               np.NPY_INT, self.data_ptr)
-        return ndarray
-
-    def __dealloc__(self):
-        """ Frees the array. This is called by Python when all the
-        references to the object are gone. """
-        free(<void*>self.data_ptr)
-
-def initialize(params, tstep_info, sn, mh):
-    """
-    Initialize the Snobal model given the input records
-
-    Args:
-        params:
-        tstep_info:
-        sn:
-        mh:
-    """
-
-    return None
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -641,7 +518,6 @@ def do_tstep(input1, input2, output_rec, tstep_rec, mh, params, first_step=True)
     """
 
     cdef int N = len(output_rec['elevation'])
-#     cdef TSTEP_REC tstep_info[4]
 
     for i in range(len(tstep_rec)):
         tstep_info[i].level = int(tstep_rec[i]['level'])
@@ -653,25 +529,9 @@ def do_tstep(input1, input2, output_rec, tstep_rec, mh, params, first_step=True)
             tstep_info[i].threshold = tstep_rec[i]['threshold']
         tstep_info[i].output = int(tstep_rec[i]['output'])
 
-
-
-    # array of pointers to OUTPUT_REC
-#     cdef OUTPUT_REC **out_c = <OUTPUT_REC**> malloc(N * sizeof(OUTPUT_REC*));
-#     cdef int n
-#     cdef OUTPUT_REC tmp
-#     for n in range(N):
-# #         tmp =
-#         out_c[n] = malloc(sizeof(OUTPUT_REC))    # initialize the memory (in heap) at that pointer
-
-
-
-
     # loop through the grid
     rt = True
     for (i,j), z in np.ndenumerate(output_rec['elevation']):
-#     with gil, parallel(num_threads=4):
-#         for n in prange(N):
-
         # extract_data.c
         #check to see if point is masked, since 1=run point, it's "not" masked
         masked = output_rec['mask'][i,j]
@@ -746,13 +606,11 @@ def do_tstep(input1, input2, output_rec, tstep_rec, mh, params, first_step=True)
             melt_sum        = output_rec['melt_sum'][i,j]
             ro_pred_sum     = output_rec['ro_pred_sum'][i,j]
 
-    #         print z_0
-
             # establish conditions for snowpack
             # the firs step mimic's snobal which only calls init_snow once. This
             # might mean that the model states will need to be saved in memory
-            # or there will be a slight descrepancy with isnobal. But with this,
-            # there should be a descrepancy in isnobal as well
+            # or there will be a slight discrepancy with isnobal. But with this,
+            # there should be a discrepancy in isnobal as well
             if first_step:
                 init_snow()
 
@@ -805,44 +663,3 @@ def do_tstep(input1, input2, output_rec, tstep_rec, mh, params, first_step=True)
             output_rec['ro_pred_sum'][i,j] = ro_pred_sum
 
     return rt
-
-
-
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-# https://github.com/cython/cython/wiki/tutorials-NumpyPointerToC
-def call_grid():
-    '''
-    Call the function krige_grid in krige.c which will iterate over the grid
-    within the C code
-
-    Args:
-        ad - [nsta x nsta] matrix of distances between stations
-        dgrid - [ngrid x nsta] matrix of distances between grid points and stations
-        elevations - [nsta] array of station elevations
-        weights (return) - [ngrid x nsta] matrix of kriging weights calculated
-        nthreads - number of threads to use in parallel processing
-
-    Out:
-        weights changed in place
-
-    20160222 Scott Havens
-    '''
-
-#     cdef int nsta, ngrid
-#     ngrid, nsta = dgrid.shape[0], dgrid.shape[1]
-#
-#     # convert the ad array to C
-#     cdef np.ndarray[double, mode="c", ndim=2] ad_arr
-#     ad_arr = np.ascontiguousarray(ad, dtype=np.float64)
-#
-#     # convert the dgrid to C
-#     cdef np.ndarray[double, mode="c", ndim=2] grid
-#     grid = np.ascontiguousarray(dgrid, dtype=np.float64)
-#
-#     # call the C function
-#     krige_grid(nsta, ngrid, &ad_arr[0,0], &grid[0,0], &elevations[0], nthreads, &weights[0,0])
-
-    return None
