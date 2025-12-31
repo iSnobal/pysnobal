@@ -25,6 +25,9 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://github.com/iSnobal/pysnobal"
 
+[project.scripts]
+pysnobal = "pysnobal.pysnobal:main"
+
 [tool.setuptools]
 include-package-data = true
 zip-safe = false

@@ -32,7 +32,6 @@ int call_snobal(
         omp_set_num_threads(nthreads);
     }
 
-#pragma omp threadprivate(tstep_info)
     for (n = 0; n < 4; n++)
         tstep_info[n] = tstep[n];
 
