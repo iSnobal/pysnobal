@@ -1,23 +1,7 @@
 import numpy as np
 
-DATA_TIMESTEP = 0
-NORMAL_TIMESTEP = 1
-MEDIUM_TIMESTEP = 2
-SMALL_TIMESTEP = 3
-
-DEFAULT_NORMAL_THRESHOLD = 60.0
-DEFAULT_MEDIUM_THRESHOLD = 10.0
-DEFAULT_SMALL_THRESHOLD = 1.0
-
-DEFAULT_MEDIUM_TIMESTEP = 15.0
-DEFAULT_SMALL_TIMESTEP = 1.0
-
-WHOLE_TIMESTEP = 1  # output when timestep is not divided
-DIVIDED_TIMESTEP = 2  # output when timestep is divided
-
-
-def min2sec(x):
-    return x * 60
+import pysnobal.defaults as defaults
+import pysnobal.utils as utils
 
 
 def get_timestep_info(options, config):
@@ -47,39 +31,57 @@ def get_timestep_info(options, config):
     # 2 hours, 3 hours, etc.
 
     data_timestep_min = float(options["time_step"])
-    timestep_info[DATA_TIMESTEP]["time_step"] = min2sec(data_timestep_min)
-
-    timestep_info[NORMAL_TIMESTEP]["time_step"] = min2sec(DEFAULT_NORMAL_THRESHOLD)
-    timestep_info[NORMAL_TIMESTEP]["intervals"] = int(
-        data_timestep_min / DEFAULT_NORMAL_THRESHOLD
+    timestep_info[defaults.DATA_TIMESTEP]["time_step"] = utils.min2sec(
+        data_timestep_min
     )
 
-    timestep_info[MEDIUM_TIMESTEP]["time_step"] = min2sec(DEFAULT_MEDIUM_TIMESTEP)
-    timestep_info[MEDIUM_TIMESTEP]["intervals"] = int(
-        DEFAULT_NORMAL_THRESHOLD / DEFAULT_MEDIUM_TIMESTEP
+    timestep_info[defaults.NORMAL_TIMESTEP]["time_step"] = utils.min2sec(
+        defaults.DEFAULT_PARAMS["normal_tstep_min"]
+    )
+    timestep_info[defaults.NORMAL_TIMESTEP]["intervals"] = int(
+        data_timestep_min / defaults.DEFAULT_PARAMS["normal_tstep_min"]
     )
 
-    timestep_info[SMALL_TIMESTEP]["time_step"] = min2sec(DEFAULT_SMALL_TIMESTEP)
-    timestep_info[SMALL_TIMESTEP]["intervals"] = int(
-        DEFAULT_MEDIUM_TIMESTEP / DEFAULT_SMALL_TIMESTEP
+    timestep_info[defaults.MEDIUM_TIMESTEP]["time_step"] = utils.min2sec(
+        defaults.DEFAULT_PARAMS["medium_tstep_min"]
+    )
+    timestep_info[defaults.MEDIUM_TIMESTEP]["intervals"] = int(
+        defaults.DEFAULT_PARAMS["normal_tstep_min"]
+        / defaults.DEFAULT_PARAMS["medium_tstep_min"]
+    )
+
+    timestep_info[defaults.SMALL_TIMESTEP]["time_step"] = utils.min2sec(
+        defaults.DEFAULT_PARAMS["small_tstep_min"]
+    )
+    timestep_info[defaults.SMALL_TIMESTEP]["intervals"] = int(
+        defaults.DEFAULT_PARAMS["medium_tstep_min"]
+        / defaults.DEFAULT_PARAMS["small_tstep_min"]
     )
 
     # output
     if config["output"]["output_mode"] == "data":
-        timestep_info[DATA_TIMESTEP]["output"] = DIVIDED_TIMESTEP
+        timestep_info[defaults.DATA_TIMESTEP]["output"] = defaults.DIVIDED_TIMESTEP
     elif config["output"]["output_mode"] == "normal":
-        timestep_info[NORMAL_TIMESTEP]["output"] = WHOLE_TIMESTEP | DIVIDED_TIMESTEP
+        timestep_info[defaults.NORMAL_TIMESTEP]["output"] = (
+            defaults.WHOLE_TIMESTEP | defaults.DIVIDED_TIMESTEP
+        )
     elif config["output"]["output_mode"] == "all":
-        timestep_info[NORMAL_TIMESTEP]["output"] = WHOLE_TIMESTEP
-        timestep_info[MEDIUM_TIMESTEP]["output"] = WHOLE_TIMESTEP
-        timestep_info[SMALL_TIMESTEP]["output"] = WHOLE_TIMESTEP
+        timestep_info[defaults.NORMAL_TIMESTEP]["output"] = defaults.WHOLE_TIMESTEP
+        timestep_info[defaults.MEDIUM_TIMESTEP]["output"] = defaults.WHOLE_TIMESTEP
+        timestep_info[defaults.SMALL_TIMESTEP]["output"] = defaults.WHOLE_TIMESTEP
     else:
-        timestep_info[DATA_TIMESTEP]["output"] = DIVIDED_TIMESTEP
+        timestep_info[defaults.DATA_TIMESTEP]["output"] = defaults.DIVIDED_TIMESTEP
 
     # mass thresholds for run timesteps
-    timestep_info[NORMAL_TIMESTEP]["threshold"] = DEFAULT_NORMAL_THRESHOLD
-    timestep_info[MEDIUM_TIMESTEP]["threshold"] = DEFAULT_MEDIUM_THRESHOLD
-    timestep_info[SMALL_TIMESTEP]["threshold"] = DEFAULT_SMALL_THRESHOLD
+    timestep_info[defaults.NORMAL_TIMESTEP]["threshold"] = defaults.DEFAULT_PARAMS[
+        "normal_tstep_mass_thresh_kgm-2"
+    ]
+    timestep_info[defaults.MEDIUM_TIMESTEP]["threshold"] = defaults.DEFAULT_PARAMS[
+        "medium_tstep_mass_thresh_kgm-2"
+    ]
+    timestep_info[defaults.SMALL_TIMESTEP]["threshold"] = defaults.DEFAULT_PARAMS[
+        "small_tstep_mass_thresh_kgm-2"
+    ]
 
     # get the rest of the parameters
     params = {

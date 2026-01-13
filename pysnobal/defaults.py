@@ -1,5 +1,13 @@
 # ***** Default Initial Conditions and Model Parameters *****
 
+DATA_TIMESTEP = 0
+NORMAL_TIMESTEP = 1
+MEDIUM_TIMESTEP = 2
+SMALL_TIMESTEP = 3
+
+WHOLE_TIMESTEP = 0x1  # output when timestep is not divided
+DIVIDED_TIMESTEP = 0x2  # output when timestep is divided
+
 DEFAULT_SNOWPACK = {
     "snow_depth_cm": 0,
     "bulk_snow_density_kgm-3": 0,

@@ -8,9 +8,8 @@ import progressbar
 import yaml
 
 import pysnobal.defaults as defaults
+import pysnobal.utils as utils
 from pysnobal.c_snobal import snobal
-
-C_TO_K = 273.16
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -98,10 +97,6 @@ def run_snobal(
     output_df = pd.DataFrame(running_output)
     output_df.index = output_df["Datetime"]
     return output_df
-
-
-def _min2sec(x):
-    return x * 60
 
 
 def _override_config(config: dict[str, Any], overrides: list[str]) -> dict[str, Any]:
@@ -319,9 +314,9 @@ def _parse_inputs(
 
     # rename forcing dataframe and convert degC to K
     forcing_data_df.rename(columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL, inplace=True)
-    forcing_data_df["T_a"] += C_TO_K
-    forcing_data_df["T_g"] += C_TO_K
-    forcing_data_df["T_pp"] += C_TO_K
+    forcing_data_df["T_a"] += utils.C_TO_K
+    forcing_data_df["T_g"] += utils.C_TO_K
+    forcing_data_df["T_pp"] += utils.C_TO_K
 
     # assemble measurement height dictionary
     mh = {
@@ -341,29 +336,29 @@ def _parse_inputs(
     # TODO: make output interval a user-configured parameter, but cannot be smaller than data_tstep
     tstep_info = [
         {
-            "level": 0,
-            "output": 0x2,
+            "level": defaults.DATA_TIMESTEP,
+            "output": defaults.DIVIDED_TIMESTEP,
             "threshold": None,
             "time_step": data_tstep_sec,
             "intervals": None,
         },
         {
-            "level": 1,
+            "level": defaults.NORMAL_TIMESTEP,
             "output": False,
             "threshold": config["defaults"]["normal_tstep_mass_thresh_kgm-2"],
-            "time_step": _min2sec(config["defaults"]["normal_tstep_min"]),
+            "time_step": utils.min2sec(config["defaults"]["normal_tstep_min"]),
         },
         {
-            "level": 2,
+            "level": defaults.MEDIUM_TIMESTEP,
             "output": False,
             "threshold": config["defaults"]["medium_tstep_mass_thresh_kgm-2"],
-            "time_step": _min2sec(config["defaults"]["medium_tstep_min"]),
+            "time_step": utils.min2sec(config["defaults"]["medium_tstep_min"]),
         },
         {
-            "level": 3,
+            "level": defaults.SMALL_TIMESTEP,
             "output": False,
             "threshold": config["defaults"]["small_tstep_mass_thresh_kgm-2"],
-            "time_step": _min2sec(config["defaults"]["small_tstep_min"]),
+            "time_step": utils.min2sec(config["defaults"]["small_tstep_min"]),
         },
     ]
 
@@ -419,7 +414,7 @@ def _append_output(
     for x in defaults.SNOW_OUT:
         v_name = defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[x]
         if "temp" in v_name:
-            running_output[v_name].append(output_rec[x][0][0] - C_TO_K)
+            running_output[v_name].append(output_rec[x][0][0] - utils.C_TO_K)
         else:
             running_output[v_name].append(output_rec[x][0][0])
 
