@@ -4,7 +4,7 @@ import pysnobal.defaults as defaults
 import pysnobal.utils as utils
 
 
-def get_timestepstep_info(options, config):
+def get_timestep_info(options, config):
     """
     Parse the options dict, set the default values if not specified
     """
