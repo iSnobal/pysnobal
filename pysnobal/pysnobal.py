@@ -44,7 +44,7 @@ def run_snobal(
         pd.DataFrame: Model output terms.
     """
     # translate forcing_data to data structures expected by do_tstep_grid
-    forcing_data_df, mh, params, tstep_info, output_rec = _parse_inputs(
+    forcing_data_df, mh, params, timestep_info, output_rec = _parse_inputs(
         forcing_data_df, config
     )
 
@@ -81,7 +81,7 @@ def run_snobal(
         input2 = forcing_pair[1]
         is_first = int(i == 1)
         rt = snobal.do_tstep_grid(
-            input1, input2, output_rec, tstep_info, mh, params, first_step=is_first
+            input1, input2, output_rec, timestep_info, mh, params, first_step=is_first
         )
 
         # check return value and raise exception as needed
@@ -294,7 +294,7 @@ def _parse_inputs(
     Verifies all required forcing variables and forcing parameters exists and are formatted
     correctly. Translates temperature to Kelvin, as expected by Snobal. Translates externally
     defined variable names to variables names used internally within Snobal. Prepares the data
-    structures (mh, params, tstep_info, output_rec) expected by Snobal and the Cython
+    structures (mh, params, timestep_info, output_rec) expected by Snobal and the Cython
     intermediary.
 
     Args:
@@ -305,7 +305,7 @@ def _parse_inputs(
         pd.DataFrame: Reformatted forcing data.
         dict: Measurement height dictionary.
         dict: Parameter dictionary.
-        list[dict]: tstep_info data structure.
+        list[dict]: timestep_info data structure.
         dict: output_rec data structure.
     """
     # check validity of inputs
@@ -334,7 +334,7 @@ def _parse_inputs(
 
     # prepare t_step info dat structure
     # TODO: make output interval a user-configured parameter, but cannot be smaller than data_tstep
-    tstep_info = [
+    timestep_info = [
         {
             "level": defaults.DATA_TIMESTEP,
             "output": defaults.DIVIDED_TIMESTEP,
@@ -363,8 +363,8 @@ def _parse_inputs(
     ]
 
     for i in range(1, 4):
-        tstep_info[i]["intervals"] = int(
-            tstep_info[i - 1]["time_step"] / tstep_info[i]["time_step"]
+        timestep_info[i]["intervals"] = int(
+            timestep_info[i - 1]["time_step"] / timestep_info[i]["time_step"]
         )
 
     # prepare output_rec datastructure
@@ -384,7 +384,7 @@ def _parse_inputs(
             config["init"][s]
         )
 
-    return forcing_data_df, mh, params, tstep_info, output_rec
+    return forcing_data_df, mh, params, timestep_info, output_rec
 
 
 def _append_output(
