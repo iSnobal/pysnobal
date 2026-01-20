@@ -2,8 +2,8 @@
 
 # Path for input and output data
 io:
-    forcing_path: './test_data/pysnobal_test_input_rcew.csv'
-    output_path: './test_data/pysnobal_test_ouput_rcew.csv'
+    forcing_path: ''
+    output_path: ''
 
 # Absolute measurement heights/depths (in meters)
 z:
@@ -23,23 +23,21 @@ params:
 # Defaults to no snow (all variables zero)
 # To specify a nonzero snowpack, replace null with the desired value for each variable
 init:
-    snow_depth_cm: null             # cm
-    bulk_snow_density_kgm-3: null   # kg/m^3
-    active_layer_temp_degC: null    # degC
-    avg_snow_temp_degC: null        # degC
-    h2o_sat_%: null                 # %
+    snow_depth_cm: 100             # cm
+    bulk_snow_density_kgm-3: 400   # kg/m^3
+    active_layer_temp_degC: -1     # degC
+    avg_snow_temp_degC: -1         # degC
+    h2o_sat_%: 5                   # %
 
 # Model defaults (values follow original pysnobal implementation)
 # To override, replace null with the desired value
 defaults:
     relative_heights: null                  # default value: False
-    max_h2o_vol_frac: null                  # default value: 0.01 
-    max_active_layer_thickness_m: null      # default value: 0.25 m
+    max_h2o_vol_frac: 0.1                   # default value: 0.01 
+    max_active_layer_thickness_m: 0.05      # default value: 0.25 m
     normal_tstep_mass_thresh_kgm-2: null    # default value: 60 kg/m^2
     medium_tstep_mass_thresh_kgm-2: null    # default value: 10 kg/m^2
     small_tstep_mass_thresh_kgm-2: null     # default value: 1 kg/m^2
     normal_tstep_min: null                  # default value: 60 min
     medium_tstep_min: null                  # default value: 15 min
     small_tstep_min: null                   # default value: 1 min
-
-

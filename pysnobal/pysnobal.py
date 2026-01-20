@@ -94,8 +94,7 @@ def run_snobal(
         if show_pbar:
             pbar.update(i)
 
-    output_df = pd.DataFrame(running_output)
-    output_df.index = output_df["Datetime"]
+    output_df = pd.DataFrame(running_output).set_index('Datetime')
     return output_df
 
 
@@ -128,13 +127,12 @@ def _override_config(config: dict[str, Any], overrides: list[str]) -> dict[str, 
         subconfig = config
         for k in keys[:-1]:
             subconfig = subconfig.get(k)
-            print(subconfig)
             if subconfig is None:
                 raise ValueError(
                     f"Invalid override '{key}'. Parameter not accepted in config."
                 )
 
-        if subconfig.get(keys[-1]) is None:
+        if keys[-1] not in subconfig:
             raise ValueError(
                 f"Invalid override '{key}'. Parameter not accepted in config."
             )
@@ -224,13 +222,12 @@ def _check_forcing_df(forcing_data_df: pd.DataFrame) -> float:
     return data_tstep_sec
 
 
-def _check_config(config: dict[str, Any], data_tstep_sec: float) -> None:
+def _check_config(config: dict[str, Any]) -> None:
     """
     Verify config has required components and correct format; backfill with defaults as needed.
 
     Args:
         config (dict): Model configuration parameters.
-        data_tstep_sec (float): Data timestep in seconds.
 
     Returns
         None
@@ -264,12 +261,14 @@ def _check_config(config: dict[str, Any], data_tstep_sec: float) -> None:
             )
 
     # backfill model parameters with defaults
-    if (config.get("init") is None) or all(
-        value is None for value in config["init"].values()
+    if (config.get("init") is None) or (
+        all(value is None for value in config["init"].values())
+        and (sorted(list(config["init"].keys())))
+        == sorted(list(defaults.PARAM_NAMES_CUSTOM2SNOBAL.keys()))
     ):
         config["init"] = defaults.DEFAULT_SNOWPACK
     else:
-        for s in []:
+        for s in defaults.PARAM_NAMES_CUSTOM2SNOBAL.keys():
             if config["init"].get(s) is None:
                 raise ValueError(
                     f"if specifying the initial snowpack state in config, config must contain {s}: {{'init' : {{{s} : <value>}}}}"
@@ -310,7 +309,7 @@ def _parse_inputs(
     """
     # check validity of inputs
     data_tstep_sec = _check_forcing_df(forcing_data_df)
-    _check_config(config, data_tstep_sec)
+    _check_config(config)
 
     # rename forcing dataframe and convert degC to K
     forcing_data_df.rename(columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL, inplace=True)
@@ -419,7 +418,7 @@ def _append_output(
             running_output[v_name].append(output_rec[x][0][0])
 
 
-def main():
+def run_pysnobal():
     """
     Excute model using config and optional overrides from the command line.
     """
@@ -435,7 +434,3 @@ def main():
 
     # save output to file
     output_df.to_csv(config["io"]["output_path"])
-
-
-if __name__ == "__main__":
-    main()
