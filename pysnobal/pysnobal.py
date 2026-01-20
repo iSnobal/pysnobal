@@ -165,7 +165,7 @@ def _load_override_config() -> dict[str, Any]:
         "-o",
         nargs="*",
         default=[],
-        help="Override config values, e.g. -o io.forcing_path=./cssl_wy17_forcing.csv params.elevation=2101",
+        help="Override config values, e.g. -o io.forcing_path=./cssl_wy17_forcing.csv params.elevation_m=2101",
     )
 
     args = parser.parse_args()
