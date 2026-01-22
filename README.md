@@ -94,8 +94,9 @@ iSnobal, iPySnobal, and AWSM are sometimes used interchangeably to refer to mode
 Snobal and PySnobal are often used interchangeably to refer to modeling the snowpack at a point using, at the lowest level, Snobal binaries.
 
 ## Selected Publications
+* Marks, D., & Dozier, J. (1992). Climate and energy exchange at the snow surface in the Alpine Region of the Sierra Nevada: 2. Snow cover energy balance. Water Resources Research, 28(11), 3043–3054. https://doi.org/10.1029/92WR01483
+
 * Marks, D., Domingo, J., Susong, D., Link, T., & Garen, D. (1999). A spatially distributed energy balance snowmelt model for application in mountain basins. Hydrological Processes, 13(12–13), 1935–1959. https://doi.org/10.1002/(SICI)1099-1085(199909)13:12/13%253C1935::AID-HYP868%253E3.0.CO;2-C
 
-* Marks, D., & Dozier, J. (1992). Climate and energy exchange at the snow surface in the Alpine Region of the Sierra Nevada: 2. Snow cover energy balance. Water Resources Research, 28(11), 3043–3054. https://doi.org/10.1029/92WR01483
 
 * Meyer, J., Horel, J., Kormos, P., Hedrick, A., Trujillo, E., & Skiles, S. M. (2023). Operational water forecast ability of the HRRR-iSnobal combination: An evaluation to adapt into production environments. Geoscientific Model Development, 16(1), 233–250. https://doi.org/10.5194/gmd-16-233-2023
