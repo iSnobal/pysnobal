@@ -156,3 +156,5 @@ def initialize(init):
             s[key] = val
 
     return s
+
+#TODO: replace with driver, call pointsnobal.py
