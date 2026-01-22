@@ -22,7 +22,6 @@ def load_config(path: Path) -> dict[str, Any]:
     Returns:
         dict: Model configuration parameters.
     """
-    # TODO: check if file exists
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
@@ -48,9 +47,6 @@ def run_snobal(
         forcing_data_df, config
     )
 
-    # set time components of output_rec
-    # TODO if want to support starting from middle of run: need to define output_rec['current_time'] and output_rec['time_since_out']
-
     # pre-make forcing pairs (vectorized opperation, faster than iterating, memory shouldn't be an issue)
     forcing_records = forcing_data_df.to_dict(orient="records")
     datetime = forcing_data_df.index.to_list()
@@ -63,14 +59,11 @@ def run_snobal(
     }
 
     # run model loop, invoking the Snobal binding, keeping running list of output
-    dt_dic = {
-        "Datetime": []
-    }  # TODO: can use dictionary intersection operator to make more elegant in more recent versions of python
-    eb_dic = {defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[col]: [] for col in defaults.EM_OUT}
-    snow_dic = {
-        defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[col]: [] for col in defaults.SNOW_OUT
-    }
-    running_output = {**dt_dic, **eb_dic, **snow_dic}
+    running_output = (
+        {"Datetime": []}
+        | {defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[c]: [] for c in defaults.EM_OUT}
+        | {defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[c]: [] for c in defaults.SNOW_OUT}
+    )
 
     if show_pbar:
         pbar = progressbar.ProgressBar(max_value=len(forcing_pairs))
@@ -94,7 +87,7 @@ def run_snobal(
         if show_pbar:
             pbar.update(i)
 
-    output_df = pd.DataFrame(running_output).set_index('Datetime')
+    output_df = pd.DataFrame(running_output).set_index("Datetime")
     return output_df
 
 
@@ -196,8 +189,13 @@ def _check_forcing_df(forcing_data_df: pd.DataFrame) -> float:
 
     # calculate timestep frequency in seconds
     timesteps = (
-        np.unique(np.diff(forcing_data_df.index)).astype("timedelta64[s]").astype(float)
-    )  # TODO can make more readable using .diff() if using more recent version of python
+        forcing_data_df.index.to_series()
+        .diff()
+        .dropna()
+        .unique()
+        .astype("timedelta64[s]")
+        .astype(float)
+    )
     if len(timesteps) > 1:
         raise ValueError(
             f"Dataframe has a non-uniform timestep. Found the following timesteps: {timesteps}"
@@ -216,8 +214,6 @@ def _check_forcing_df(forcing_data_df: pd.DataFrame) -> float:
             raise ValueError(
                 f"Column {col} is not serially complete (i.e. contains NaN)"
             )
-
-    # TODO: incorporate line 304 from the original pysnobal?
 
     return data_tstep_sec
 
@@ -332,7 +328,6 @@ def _parse_inputs(
     }
 
     # prepare t_step info dat structure
-    # TODO: make output interval a user-configured parameter, but cannot be smaller than data_tstep
     timestep_info = [
         {
             "level": defaults.DATA_TIMESTEP,
