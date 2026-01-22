@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pysnobal.defaults as defaults
@@ -62,19 +60,18 @@ def test_check_forcing_df_not_serially_complete(col):
 
 
 @pytest.mark.parametrize("case", ["baseline", "override"])
-def test_check_config(case):
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
-
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / f"{case}_config.yaml"
+def test_check_config(case, test_data):
+    # Load config and expected
+    config_file = test_data.config(case, "config")
     config = load_config(config_file)
 
-    expected_file = tests_dir / "data" / "config" / f"{case}_expected.yaml"
+    expected_file = test_data.config(case, "expected")
     expected = load_config(expected_file)
 
+    # Run function
     _check_config(config)
 
+    # Ensure desired changes made
     assert config == expected
 
 
@@ -96,14 +93,12 @@ def test_check_config(case):
         ]
     ],
 )
-def test_check_config_exceptions(group, param, bad_val):
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
-
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / "baseline_config.yaml"
+def test_check_config_exceptions(group, param, bad_val, test_data):
+    # Load config
+    config_file = test_data.config("baseline", "config")
     config = load_config(config_file)
 
+    # modify contents to get ill-formed input (test dependent)
     if param is None:
         del config[group]
     elif group == "init":
@@ -111,22 +106,20 @@ def test_check_config_exceptions(group, param, bad_val):
     else:
         config[group][param] = bad_val
 
+    # ensure exception is raised
     with pytest.raises(ValueError):
         _check_config(config)
 
 
 @pytest.mark.parametrize("case", ["baseline", "override"])
-def test_parse_inputs(case):
+def test_parse_inputs(case, test_data):
     df = get_well_formed_forcing_df()
 
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
-
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / f"{case}_config.yaml"
+    # Load config and expected
+    config_file = test_data.config(case, "config")
     config = load_config(config_file)
 
-    expected_file = tests_dir / "data" / "config" / f"{case}_expected.yaml"
+    expected_file = test_data.config(case, "expected")
     expected = load_config(expected_file)
 
     forcing_data_df, mh, params, timestep_info, output_rec = _parse_inputs(df, config)

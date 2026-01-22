@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from pysnobal.pysnobal import _load_override_config, load_config
 
@@ -11,16 +9,14 @@ from pysnobal.pysnobal import _load_override_config, load_config
         ("-c"),
     ],
 )
-def test_config_load(monkeypatch, config_flag):
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
-
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / "baseline_config.yaml"
+def test_config_load(monkeypatch, config_flag, test_data):
+    # Path to conifg
+    config_file = test_data.config("baseline", "config")
 
     # Load actual
     actual = load_config(config_file)
 
+    # Simulate cli
     monkeypatch.setattr("sys.argv", ["pysnobal", config_flag, str(config_file)])
     result = _load_override_config()
 
@@ -56,17 +52,15 @@ def test_config_load(monkeypatch, config_flag):
         ),
     ],
 )
-def test_config_load_and_override(monkeypatch, override_flag, override_args):
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
-
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / "baseline_config.yaml"
-    validation_file = tests_dir / "data" / "config" / "override_config.yaml"
+def test_config_load_and_override(monkeypatch, override_flag, override_args, test_data):
+    # Paths to config
+    config_file = test_data.config("baseline", "config")
+    validation_file = test_data.config("override", "config")
 
     # Load actual
     actual = load_config(validation_file)
 
+    # Simulate CLI
     monkeypatch.setattr(
         "sys.argv", ["pysnobal", "-c", str(config_file), override_flag] + override_args
     )
@@ -83,13 +77,11 @@ def test_config_load_and_override(monkeypatch, override_flag, override_args):
         ("defaults.max_h2o_vol=0.1"),
     ],
 )
-def test_config_load_and_override_exceptions(monkeypatch, override_arg):
-    # Get path to this test file’s folder
-    tests_dir = Path(__file__).parent
+def test_config_load_and_override_exceptions(monkeypatch, override_arg, test_data):
+    # Path to conifg
+    config_file = test_data.config("baseline", "config")
 
-    # Build path to the data file
-    config_file = tests_dir / "data" / "config" / "baseline_config.yaml"
-
+    # Simulate CLI
     monkeypatch.setattr(
         "sys.argv", ["pysnobal", "-c", str(config_file), "-o", override_arg]
     )
