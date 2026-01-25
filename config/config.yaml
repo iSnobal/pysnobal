@@ -7,7 +7,7 @@ io:
 
 # Absolute measurement heights/depths (in meters)
 z:
-    air_temp_m: 2.33     # m
+    air_temp_m: 2.33    # m
     soil_temp_m: 1.0    # m
     wind_speed_m: 2.5   # m       
 
@@ -23,7 +23,7 @@ params:
 # Defaults to no snow (all variables zero)
 # To specify a nonzero snowpack, replace null with the desired value for each variable
 init:
-    snow_depth_cm: null             # cm
+    snow_depth_m: null              # m
     bulk_snow_density_kgm-3: null   # kg/m^3
     active_layer_temp_degC: null    # degC
     avg_snow_temp_degC: null        # degC

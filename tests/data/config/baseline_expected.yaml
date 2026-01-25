@@ -23,21 +23,21 @@ params:
 # Defaults to no snow (all variables zero)
 # To specify a nonzero snowpack, replace null with the desired value for each variable
 init:
-    snow_depth_cm: 0             # cm
-    bulk_snow_density_kgm-3: 0   # kg/m^3
-    active_layer_temp_degC: 0    # degC
-    avg_snow_temp_degC: 0        # degC
-    h2o_sat_%: 0                 # %
+    snow_depth_m: 0.0              # m
+    bulk_snow_density_kgm-3: 0.0   # kg/m^3
+    active_layer_temp_degC: 0.0    # degC
+    avg_snow_temp_degC: 0.0        # degC
+    h2o_sat_%: 0.0                 # %
 
 # Model defaults (values follow original pysnobal implementation)
 # To override, replace null with the desired value
 defaults:
-    relative_heights: False                  # default value: False
-    max_h2o_vol_frac: 0.01                   # default value: 0.01 
-    max_active_layer_thickness_m: 0.25       # default value: 0.25 m
-    normal_tstep_mass_thresh_kgm-2: 60       # default value: 60 kg/m^2
-    medium_tstep_mass_thresh_kgm-2: 10       # default value: 10 kg/m^2
-    small_tstep_mass_thresh_kgm-2: 1         # default value: 1 kg/m^2
-    normal_tstep_min: 60                     # default value: 60 min
-    medium_tstep_min: 15                     # default value: 15 min
-    small_tstep_min: 1                       # default value: 1 min
+    relative_heights: False                    # default value: False
+    max_h2o_vol_frac: 0.01                     # default value: 0.01 
+    max_active_layer_thickness_m: 0.25         # default value: 0.25 m
+    normal_tstep_mass_thresh_kgm-2: 60.0       # default value: 60 kg/m^2
+    medium_tstep_mass_thresh_kgm-2: 10.0       # default value: 10 kg/m^2
+    small_tstep_mass_thresh_kgm-2: 1.0         # default value: 1 kg/m^2
+    normal_tstep_min: 60.0                     # default value: 60 min
+    medium_tstep_min: 15.0                     # default value: 15 min
+    small_tstep_min: 1.0                       # default value: 1 min

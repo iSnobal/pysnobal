@@ -23,7 +23,7 @@ params:
 # Defaults to no snow (all variables zero)
 # To specify a nonzero snowpack, replace null with the desired value for each variable
 init:
-    snow_depth_cm: 100             # cm
+    snow_depth_m: 1                # m
     bulk_snow_density_kgm-3: 400   # kg/m^3
     active_layer_temp_degC: -1     # degC
     avg_snow_temp_degC: -1         # degC
