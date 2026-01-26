@@ -41,7 +41,7 @@ def test_pysnobal_cli_entrypoint_real_data(monkeypatch, tmp_path, test_data):
     )
 
 
-def test_pysnobal_functional_entrypoint_real_data(tmp_path, test_data):
+def test_pysnobal_functional_entrypoint_real_data(test_data):
     config_file = test_data.config("baseline", "config")
     config = load_config(config_file)
 

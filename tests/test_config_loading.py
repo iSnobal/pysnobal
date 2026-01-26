@@ -29,7 +29,7 @@ def test_config_load(monkeypatch, config_flag, test_data):
         (
             "--override",
             [
-                "init.snow_depth_cm=100",
+                "init.snow_depth_m=1",
                 "init.bulk_snow_density_kgm-3=400",
                 "init.active_layer_temp_degC=-1",
                 "init.avg_snow_temp_degC=-1",
@@ -41,7 +41,7 @@ def test_config_load(monkeypatch, config_flag, test_data):
         (
             "-o",
             [
-                "init.snow_depth_cm=100",
+                "init.snow_depth_m=1",
                 "init.bulk_snow_density_kgm-3=400",
                 "init.active_layer_temp_degC=-1",
                 "init.avg_snow_temp_degC=-1",

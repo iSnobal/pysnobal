@@ -9,23 +9,23 @@ WHOLE_TIMESTEP = 0x1  # output when timestep is not divided
 DIVIDED_TIMESTEP = 0x2  # output when timestep is divided
 
 DEFAULT_SNOWPACK = {
-    "snow_depth_cm": 0,
-    "bulk_snow_density_kgm-3": 0,
-    "active_layer_temp_degC": 0,
-    "avg_snow_temp_degC": 0,
-    "h2o_sat_%": 0,
+    "snow_depth_m": 0.0,
+    "bulk_snow_density_kgm-3": 0.0,
+    "active_layer_temp_degC": 0.0,
+    "avg_snow_temp_degC": 0.0,
+    "h2o_sat_%": 0.0,
 }
 
 DEFAULT_PARAMS = {
     "relative_heights": False,
     "max_h2o_vol_frac": 0.01,
     "max_active_layer_thickness_m": 0.25,
-    "normal_tstep_mass_thresh_kgm-2": 60,
-    "medium_tstep_mass_thresh_kgm-2": 10,
-    "small_tstep_mass_thresh_kgm-2": 1,
-    "normal_tstep_min": 60,
-    "medium_tstep_min": 15,
-    "small_tstep_min": 1,
+    "normal_tstep_mass_thresh_kgm-2": 60.0,
+    "medium_tstep_mass_thresh_kgm-2": 10.0,
+    "small_tstep_mass_thresh_kgm-2": 1.0,
+    "normal_tstep_min": 60.0,
+    "medium_tstep_min": 15.0,
+    "small_tstep_min": 1.0,
 }
 
 # ***** Output Variables *****
@@ -76,16 +76,16 @@ FORCING_NAMES_CUSTOM2SNOBAL = {
     "snow_precip_density_kgm-3": "rho_snow",
 }
 
-PARAM_NAMES_CUSTOM2SNOBAL = {
-    "snow_depth_cm": "snow_depth",
-    "bulk_snow_density_kgm-3": "bulk_snow_density",
-    "active_layer_temp_degC": "active_layer_temp",
-    "avg_snow_temp_degC": "avg_snow_temp",
+INIT_NAMES_CUSTOM2SNOBAL = {
+    "snow_depth_m": "z_s",
+    "bulk_snow_density_kgm-3": "rho",
+    "active_layer_temp_degC": "T_s_0",
+    "avg_snow_temp_degC": "T_s",
     "h2o_sat_%": "h2o_sat",
 }
 
 OUTPUT_NAMES_SNOBAL2CUSTOM = {
-    "rho": "density_snow_kgm-3",
+    "rho": "bulk_density_snow_kgm-3",
     "T_s_0": "temp_active_layer_degC",
     "T_s_l": "temp_lower_layer_degC",
     "T_s": "temp_snow_degC",

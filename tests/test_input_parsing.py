@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pysnobal.defaults as defaults
+import pysnobal.utils as utils
 import pytest
 from pysnobal.pysnobal import (
     _check_config,
@@ -25,6 +26,10 @@ def get_well_formed_forcing_df():
     df = pd.DataFrame(data, index=index)
 
     return df
+
+
+def reverse_dict(d):
+    return dict(zip(d.values(), d.keys()))
 
 
 def test_check_forcing_df():
@@ -85,7 +90,7 @@ def test_check_config(case, test_data):
     + [
         ("init", i, None)
         for i in [
-            "snow_depth_cm",
+            "snow_depth_m",
             "bulk_snow_density_kgm-3",
             "active_layer_temp_degC",
             "avg_snow_temp_degC",
@@ -171,9 +176,19 @@ def test_parse_inputs(case, test_data):
     assert np.all(output_rec["mask"].ravel()) == 1
 
     for key in defaults.OUTPUT_NAMES_SNOBAL2CUSTOM.keys():
-        if defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[key] in expected["init"].keys():
-            assert output_rec[key] == np.atleast_2d(
-                expected["init"][defaults.OUTPUT_NAMES_SNOBAL2CUSTOM[key]]
-            )
+        if reverse_dict(defaults.INIT_NAMES_CUSTOM2SNOBAL).get(key) is not None:
+            if "temp" in reverse_dict(defaults.INIT_NAMES_CUSTOM2SNOBAL)[key]:
+                assert output_rec[key] == np.atleast_2d(
+                    expected["init"][
+                        reverse_dict(defaults.INIT_NAMES_CUSTOM2SNOBAL)[key]
+                    ]
+                    + utils.C_TO_K
+                )
+            else:
+                assert output_rec[key] == np.atleast_2d(
+                    expected["init"][
+                        reverse_dict(defaults.INIT_NAMES_CUSTOM2SNOBAL)[key]
+                    ]
+                )
         else:
             assert output_rec[key] == np.atleast_2d(0.0)

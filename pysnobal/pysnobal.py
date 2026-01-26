@@ -73,6 +73,7 @@ def run_snobal(
         input1 = forcing_pair[0]
         input2 = forcing_pair[1]
         is_first = int(i == 1)
+
         rt = snobal.do_tstep_grid(
             input1, input2, output_rec, timestep_info, mh, params, first_step=is_first
         )
@@ -260,11 +261,11 @@ def _check_config(config: dict[str, Any]) -> None:
     if (config.get("init") is None) or (
         all(value is None for value in config["init"].values())
         and (sorted(list(config["init"].keys())))
-        == sorted(list(defaults.PARAM_NAMES_CUSTOM2SNOBAL.keys()))
+        == sorted(list(defaults.INIT_NAMES_CUSTOM2SNOBAL.keys()))
     ):
         config["init"] = defaults.DEFAULT_SNOWPACK
     else:
-        for s in defaults.PARAM_NAMES_CUSTOM2SNOBAL.keys():
+        for s in defaults.INIT_NAMES_CUSTOM2SNOBAL.keys():
             if config["init"].get(s) is None:
                 raise ValueError(
                     f"if specifying the initial snowpack state in config, config must contain {s}: {{'init' : {{{s} : <value>}}}}"
@@ -312,6 +313,8 @@ def _parse_inputs(
     forcing_data_df["T_a"] += utils.C_TO_K
     forcing_data_df["T_g"] += utils.C_TO_K
     forcing_data_df["T_pp"] += utils.C_TO_K
+    config["init"]["active_layer_temp_degC"] += utils.C_TO_K
+    config["init"]["avg_snow_temp_degC"] += utils.C_TO_K
 
     # assemble measurement height dictionary
     mh = {
@@ -333,7 +336,7 @@ def _parse_inputs(
             "level": defaults.DATA_TIMESTEP,
             "output": defaults.DIVIDED_TIMESTEP,
             "threshold": None,
-            "time_step": data_tstep_sec,
+            "time_step": int(data_tstep_sec),
             "intervals": None,
         },
         {
@@ -362,11 +365,11 @@ def _parse_inputs(
         )
 
     # prepare output_rec datastructure
+    mask = np.atleast_2d(1.0)
     elevation = np.atleast_2d(config["params"]["elevation_m"])
-    mask = np.atleast_2d(1)
     roughness_length = np.atleast_2d(config["params"]["roughness_length_m"])
 
-    output_rec = {"elevation": elevation, "mask": mask, "z_0": roughness_length}
+    output_rec = {"mask": mask, "elevation": elevation, "z_0": roughness_length}
 
     # add snobal state variables and EB terms
     for key in defaults.OUTPUT_NAMES_SNOBAL2CUSTOM.keys():
@@ -374,7 +377,7 @@ def _parse_inputs(
 
     # initialize snow conditions
     for s in config["init"]:
-        output_rec[defaults.PARAM_NAMES_CUSTOM2SNOBAL[s]] = np.atleast_2d(
+        output_rec[defaults.INIT_NAMES_CUSTOM2SNOBAL[s]] = np.atleast_2d(
             config["init"][s]
         )
 
@@ -411,6 +414,8 @@ def _append_output(
             running_output[v_name].append(output_rec[x][0][0] - utils.C_TO_K)
         else:
             running_output[v_name].append(output_rec[x][0][0])
+
+    output_rec["time_since_out"][0][0] = 0.0
 
 
 def run_pysnobal():
