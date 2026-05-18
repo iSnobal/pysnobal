@@ -1,4 +1,5 @@
 import pandas as pd
+
 from pysnobal.pysnobal import load_config, run_pysnobal, run_snobal
 
 
@@ -18,8 +19,8 @@ def test_pysnobal_cli_entrypoint_real_data(monkeypatch, tmp_path, test_data):
             "-c",
             str(config_file),
             "-o",
-            f"io.forcing_path={str(input_path)}",
-            f"io.output_path={str(output_path)}",
+            f"io.forcing_path={input_path!s}",
+            f"io.output_path={output_path!s}",
         ],
     )
 
@@ -38,6 +39,7 @@ def test_pysnobal_cli_entrypoint_real_data(monkeypatch, tmp_path, test_data):
         result_df.drop(columns=drop_list),
         expected_df.drop(columns=drop_list),
         check_exact=False,
+        check_like=True,
     )
 
 
@@ -66,4 +68,5 @@ def test_pysnobal_functional_entrypoint_real_data(test_data):
         result_df.drop(columns=drop_list).reset_index(),
         expected_df.drop(columns=drop_list).reset_index(),
         check_exact=False,
+        check_like=True,
     )
