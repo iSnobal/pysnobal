@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "envphys.h"
 #include "error_logging.h"
@@ -15,7 +16,7 @@ double sati(double tk) {
 
     if (tk <= 0.) {
         LOG_ERROR("Input temperature (tk): %f is less than zero", tk);
-        exit(EXIT_FAILURE);
+        EXIT_WITH_TRACE(EXIT_FAILURE);
     }
 
     if (tk > FREEZE) {
@@ -38,7 +39,7 @@ double sati(double tk) {
 
     if (errno) {
         LOG_ERROR("Bad return from log or pow");
-        exit(EXIT_FAILURE);
+        EXIT_WITH_TRACE(EXIT_FAILURE);
     }
 
     return (x * 1.e2);
