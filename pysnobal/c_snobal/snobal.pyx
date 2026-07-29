@@ -227,112 +227,117 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
             tstep_info[i].threshold = tstep_rec[i]['threshold']
         tstep_info[i].output = int(tstep_rec[i]['output'])
 
-    # Typed memoryviews provide a direct C-level pointer to contiguous NumPy arrays
+    # Direct typed-memoryview views into the output_rec arrays.
+    # initialize() guarantees all float64 arrays are already C-contiguous float64,
+    # so these are zero-copy views.  The C code writes into them in-place.
     cdef OUTPUT_REC_ARR output1_c
 
-    cdef double[:, ::1] output1_z_0 = np.ascontiguousarray(output_rec['z_0'], dtype=np.float64)
+    cdef double[:, ::1] output1_z_0 = output_rec['z_0']
     output1_c.z_0 = &output1_z_0[0, 0]
 
-    cdef double[:, ::1] output1_z_s_0 = np.ascontiguousarray(output_rec['z_s_0'], dtype=np.float64)
+    cdef double[:, ::1] output1_z_s_0 = output_rec['z_s_0']
     output1_c.z_s_0 = &output1_z_s_0[0, 0]
 
-    cdef double[:, ::1] output1_current_time = np.ascontiguousarray(output_rec['current_time'], dtype=np.float64)
+    cdef double[:, ::1] output1_current_time = output_rec['current_time']
     output1_c.current_time = &output1_current_time[0, 0]
 
-    cdef double[:, ::1] output1_time_since_out = np.ascontiguousarray(output_rec['time_since_out'], dtype=np.float64)
+    cdef double[:, ::1] output1_time_since_out = output_rec['time_since_out']
     output1_c.time_since_out = &output1_time_since_out[0, 0]
 
+    # mask is stored as float64 in output_rec but the C struct uses int*; keep conversion.
     cdef int[:, ::1] output1_masked = np.ascontiguousarray(output_rec['mask'], dtype=np.int32)
     output1_c.masked = &output1_masked[0, 0]
 
-    cdef double[:, ::1] output1_elevation = np.ascontiguousarray(output_rec['elevation'], dtype=np.float64)
+    cdef double[:, ::1] output1_elevation = output_rec['elevation']
     output1_c.elevation = &output1_elevation[0, 0]
 
-    cdef double[:, ::1] output1_z_s_l = np.ascontiguousarray(output_rec['z_s_l'], dtype=np.float64)
+    cdef double[:, ::1] output1_z_s_l = output_rec['z_s_l']
     output1_c.z_s_l = &output1_z_s_l[0, 0]
 
-    cdef double[:, ::1] output1_z_s = np.ascontiguousarray(output_rec['z_s'], dtype=np.float64)
+    cdef double[:, ::1] output1_z_s = output_rec['z_s']
     output1_c.z_s = &output1_z_s[0, 0]
 
-    cdef double[:, ::1] output1_rho = np.ascontiguousarray(output_rec['rho'], dtype=np.float64)
+    cdef double[:, ::1] output1_rho = output_rec['rho']
     output1_c.rho = &output1_rho[0, 0]
 
-    cdef double[:, ::1] output1_T_s_0 = np.ascontiguousarray(output_rec['T_s_0'], dtype=np.float64)
+    cdef double[:, ::1] output1_T_s_0 = output_rec['T_s_0']
     output1_c.T_s_0 = &output1_T_s_0[0, 0]
 
-    cdef double[:, ::1] output1_T_s_l = np.ascontiguousarray(output_rec['T_s_l'], dtype=np.float64)
+    cdef double[:, ::1] output1_T_s_l = output_rec['T_s_l']
     output1_c.T_s_l = &output1_T_s_l[0, 0]
 
-    cdef double[:, ::1] output1_T_s = np.ascontiguousarray(output_rec['T_s'], dtype=np.float64)
+    cdef double[:, ::1] output1_T_s = output_rec['T_s']
     output1_c.T_s = &output1_T_s[0, 0]
 
-    cdef double[:, ::1] output1_cc_s_0 = np.ascontiguousarray(output_rec['cc_s_0'], dtype=np.float64)
+    cdef double[:, ::1] output1_cc_s_0 = output_rec['cc_s_0']
     output1_c.cc_s_0 = &output1_cc_s_0[0, 0]
 
-    cdef double[:, ::1] output1_cc_s_l = np.ascontiguousarray(output_rec['cc_s_l'], dtype=np.float64)
+    cdef double[:, ::1] output1_cc_s_l = output_rec['cc_s_l']
     output1_c.cc_s_l = &output1_cc_s_l[0, 0]
 
-    cdef double[:, ::1] output1_cc_s = np.ascontiguousarray(output_rec['cc_s'], dtype=np.float64)
+    cdef double[:, ::1] output1_cc_s = output_rec['cc_s']
     output1_c.cc_s = &output1_cc_s[0, 0]
 
-    cdef double[:, ::1] output1_m_s_0 = np.ascontiguousarray(output_rec['m_s_0'], dtype=np.float64)
+    cdef double[:, ::1] output1_m_s_0 = output_rec['m_s_0']
     output1_c.m_s_0 = &output1_m_s_0[0, 0]
 
-    cdef double[:, ::1] output1_m_s_l = np.ascontiguousarray(output_rec['m_s_l'], dtype=np.float64)
+    cdef double[:, ::1] output1_m_s_l = output_rec['m_s_l']
     output1_c.m_s_l = &output1_m_s_l[0, 0]
 
-    cdef double[:, ::1] output1_m_s = np.ascontiguousarray(output_rec['m_s'], dtype=np.float64)
+    cdef double[:, ::1] output1_m_s = output_rec['m_s']
     output1_c.m_s = &output1_m_s[0, 0]
 
-    cdef double[:, ::1] output1_h2o_sat = np.ascontiguousarray(output_rec['h2o_sat'], dtype=np.float64)
+    cdef double[:, ::1] output1_h2o_sat = output_rec['h2o_sat']
     output1_c.h2o_sat = &output1_h2o_sat[0, 0]
 
-    cdef double[:, ::1] output1_h2o_max = np.ascontiguousarray(output_rec['h2o_max'], dtype=np.float64)
+    cdef double[:, ::1] output1_h2o_max = output_rec['h2o_max']
     output1_c.h2o_max = &output1_h2o_max[0, 0]
 
-    cdef double[:, ::1] output1_h2o = np.ascontiguousarray(output_rec['h2o'], dtype=np.float64)
+    cdef double[:, ::1] output1_h2o = output_rec['h2o']
     output1_c.h2o = &output1_h2o[0, 0]
 
-    cdef double[:, ::1] output1_h2o_vol = np.ascontiguousarray(output_rec['h2o_vol'], dtype=np.float64)
+    cdef double[:, ::1] output1_h2o_vol = output_rec['h2o_vol']
     output1_c.h2o_vol = &output1_h2o_vol[0, 0]
 
-    cdef double[:, ::1] output1_h2o_total = np.ascontiguousarray(output_rec['h2o_total'], dtype=np.float64)
+    cdef double[:, ::1] output1_h2o_total = output_rec['h2o_total']
     output1_c.h2o_total = &output1_h2o_total[0, 0]
 
+    # layer_count is stored as float64 in output_rec but the C struct uses int*;
+    # ascontiguousarray makes a copy here and write-back below syncs it back.
     cdef int[:, ::1] output1_layer_count = np.ascontiguousarray(output_rec['layer_count'], dtype=np.int32)
     output1_c.layer_count = &output1_layer_count[0, 0]
 
-    cdef double[:, ::1] output1_R_n_bar = np.ascontiguousarray(output_rec['R_n_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_R_n_bar = output_rec['R_n_bar']
     output1_c.R_n_bar = &output1_R_n_bar[0, 0]
 
-    cdef double[:, ::1] output1_H_bar = np.ascontiguousarray(output_rec['H_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_H_bar = output_rec['H_bar']
     output1_c.H_bar = &output1_H_bar[0, 0]
 
-    cdef double[:, ::1] output1_L_v_E_bar = np.ascontiguousarray(output_rec['L_v_E_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_L_v_E_bar = output_rec['L_v_E_bar']
     output1_c.L_v_E_bar = &output1_L_v_E_bar[0, 0]
 
-    cdef double[:, ::1] output1_G_bar = np.ascontiguousarray(output_rec['G_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_G_bar = output_rec['G_bar']
     output1_c.G_bar = &output1_G_bar[0, 0]
 
-    cdef double[:, ::1] output1_G_0_bar = np.ascontiguousarray(output_rec['G_0_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_G_0_bar = output_rec['G_0_bar']
     output1_c.G_0_bar = &output1_G_0_bar[0, 0]
 
-    cdef double[:, ::1] output1_M_bar = np.ascontiguousarray(output_rec['M_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_M_bar = output_rec['M_bar']
     output1_c.M_bar = &output1_M_bar[0, 0]
 
-    cdef double[:, ::1] output1_delta_Q_bar = np.ascontiguousarray(output_rec['delta_Q_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_delta_Q_bar = output_rec['delta_Q_bar']
     output1_c.delta_Q_bar = &output1_delta_Q_bar[0, 0]
 
-    cdef double[:, ::1] output1_delta_Q_0_bar = np.ascontiguousarray(output_rec['delta_Q_0_bar'], dtype=np.float64)
+    cdef double[:, ::1] output1_delta_Q_0_bar = output_rec['delta_Q_0_bar']
     output1_c.delta_Q_0_bar = &output1_delta_Q_0_bar[0, 0]
 
-    cdef double[:, ::1] output1_E_s_sum = np.ascontiguousarray(output_rec['E_s_sum'], dtype=np.float64)
+    cdef double[:, ::1] output1_E_s_sum = output_rec['E_s_sum']
     output1_c.E_s_sum = &output1_E_s_sum[0, 0]
 
-    cdef double[:, ::1] output1_melt_sum = np.ascontiguousarray(output_rec['melt_sum'], dtype=np.float64)
+    cdef double[:, ::1] output1_melt_sum = output_rec['melt_sum']
     output1_c.melt_sum = &output1_melt_sum[0, 0]
 
-    cdef double[:, ::1] output1_ro_pred_sum = np.ascontiguousarray(output_rec['ro_pred_sum'], dtype=np.float64)
+    cdef double[:, ::1] output1_ro_pred_sum = output_rec['ro_pred_sum']
     output1_c.ro_pred_sum = &output1_ro_pred_sum[0, 0]
 
     cdef INPUT_REC_ARR input1_c
@@ -396,46 +401,11 @@ def do_tstep_grid(input1, input2, output_rec, tstep_rec, mh, params, int first_s
     if rt != -1:
         return rt
 
-    # Write results from the C-level buffers (typed memoryviews) back to the
-    # output record dict.  Each local memoryview already shares the same data
-    # buffer that was passed to C, so a simple slice-assignment is sufficient.
-    output_rec['z_0'][:] = output1_z_0
-    output_rec['z_s_0'][:] = output1_z_s_0
-
-    output_rec['current_time'][:] = output1_current_time
-    output_rec['time_since_out'][:] = output1_time_since_out
-
-    output_rec['elevation'][:] = output1_elevation
-    output_rec['rho'][:] = output1_rho
-    output_rec['T_s_0'][:] = output1_T_s_0
-    output_rec['T_s_l'][:] = output1_T_s_l
-    output_rec['T_s'][:] = output1_T_s
-    output_rec['h2o_sat'][:] = output1_h2o_sat
-    output_rec['h2o_max'][:] = output1_h2o_max
-    output_rec['h2o'][:] = output1_h2o
-    output_rec['h2o_vol'][:] = output1_h2o_vol
-    output_rec['h2o_total'][:] = output1_h2o_total
+    # All float64 output arrays are direct memoryview views into output_rec — the
+    # C code writes into them in-place and no write-back is needed.
+    # layer_count is the sole exception: it is stored as float64 in output_rec but
+    # the C struct uses int32, so ascontiguousarray above made a copy; sync it back.
     output_rec['layer_count'][:] = output1_layer_count
-    output_rec['cc_s_0'][:] = output1_cc_s_0
-    output_rec['cc_s_l'][:] = output1_cc_s_l
-    output_rec['cc_s'][:] = output1_cc_s
-    output_rec['m_s_0'][:] = output1_m_s_0
-    output_rec['m_s_l'][:] = output1_m_s_l
-    output_rec['m_s'][:] = output1_m_s
-    output_rec['z_s_l'][:] = output1_z_s_l
-    output_rec['z_s'][:] = output1_z_s
-
-    output_rec['R_n_bar'][:] = output1_R_n_bar
-    output_rec['H_bar'][:] = output1_H_bar
-    output_rec['L_v_E_bar'][:] = output1_L_v_E_bar
-    output_rec['G_bar'][:] = output1_G_bar
-    output_rec['G_0_bar'][:] = output1_G_0_bar
-    output_rec['M_bar'][:] = output1_M_bar
-    output_rec['delta_Q_bar'][:] = output1_delta_Q_bar
-    output_rec['delta_Q_0_bar'][:] = output1_delta_Q_0_bar
-    output_rec['E_s_sum'][:] = output1_E_s_sum
-    output_rec['melt_sum'][:] = output1_melt_sum
-    output_rec['ro_pred_sum'][:] = output1_ro_pred_sum
 
     return rt
 

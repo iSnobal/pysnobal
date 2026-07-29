@@ -152,9 +152,11 @@ def initialize(init):
     # Initialize according to the topo shape
     s = {key: np.zeros(sz) for key in fields}
 
-    # Update values from config
+    # Update values from config, enforcing float64 C-contiguous layout so that
+    # do_tstep_grid can take direct typed-memoryview views into these buffers
+    # without ascontiguousarray making silent copies that lose written-back state.
     for key, val in init.items():
         if key in fields:
-            s[key] = val
+            s[key] = np.ascontiguousarray(val, dtype=np.float64)
 
     return s
