@@ -13,9 +13,10 @@
 void print_user_backtrace(void);
 
 /* Show stacktrace logging and exit */
-#define EXIT_WITH_TRACE(status) do {                                       \
-    fprintf(stderr, "[FATAL] Exit called at %s:%d\n", __FILE__, __LINE__); \
-    print_user_backtrace();                                                \
+#define EXIT_WITH_TRACE(status) do {                                        \
+    fprintf(stderr, "[FATAL] Exit called at %s:%d\n", __FILE__, __LINE__);  \
+    print_user_backtrace();                                                 \
+    fflush(stderr);                                                        \
     exit(status);                                                          \
 } while(0)
 
