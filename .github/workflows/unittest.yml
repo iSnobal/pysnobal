@@ -8,8 +8,8 @@ on:
       - v*
     paths-ignore:
       - LICENSE
-      - '**.md'
-      - '**.rst'
+      - "**.md"
+      - "**.rst"
       - .gitignore
       - .editorconfig
       - .clang-format
@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       GCC_VERSION: 11
@@ -84,5 +84,4 @@ jobs:
       - name: Run unittests
         run: |
           # Test that the model builds
-          micromamba run -n isnobal make build
-          micromamba run -n isnobal pytest
+          micromamba run -n isnobal make tests
