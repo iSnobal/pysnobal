@@ -189,12 +189,7 @@ def _check_forcing_df(forcing_data_df: pd.DataFrame) -> float:
 
     # calculate timestep frequency in seconds
     timesteps = (
-        forcing_data_df.index.to_series()
-        .diff()
-        .dropna()
-        .unique()
-        .astype("timedelta64[s]")
-        .astype(float)
+        forcing_data_df.index.to_series().diff().dropna().dt.total_seconds().unique()
     )
     if len(timesteps) > 1:
         raise ValueError(
