@@ -42,4 +42,5 @@ install: clean ## Install the Python package in editable mode
 	python -m pip install -e .
 
 install-dev: clean build ## Install the package in a development environment
+	python -m pip install --group dev
 	python -m pip install --no-deps -e .
