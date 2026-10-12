@@ -7,8 +7,7 @@ import pandas as pd
 import progressbar
 import yaml
 
-import pysnobal.defaults as defaults
-import pysnobal.utils as utils
+from pysnobal import defaults, utils
 from pysnobal.c_snobal import snobal
 
 
