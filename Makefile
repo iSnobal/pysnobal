@@ -26,19 +26,10 @@ clean-pyc: ## Remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## Remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-tests: ## Run the Python tests
-	python setup.py test
-
-coverage: ## Check Python code coverage
-	coverage run --source pysnobal setup.py test
-	coverage report -m
-	coverage html
-	$(BROWSER) htmlcov/index.html
+tests: install-dev ## Run the Python tests
+	pytest
 
 docs: ## Generate Sphinx HTML documentation, including API docs
 	rm -f docs/pysnobal.rst
@@ -49,3 +40,7 @@ docs: ## Generate Sphinx HTML documentation, including API docs
 
 install: clean ## Install the Python package in editable mode
 	python -m pip install -e .
+
+install-dev: clean build ## Install the package in a development environment
+	python -m pip install --group dev
+	python -m pip install --no-deps -e .

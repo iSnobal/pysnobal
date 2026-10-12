@@ -1,7 +1,7 @@
 [build-system]
 requires = [
   "cython",
-  "numpy<1.23",
+  "numpy<3",
   "setuptools",
   "setuptools_scm",
   "wheel",
@@ -27,6 +27,11 @@ Homepage = "https://github.com/iSnobal/pysnobal"
 
 [project.scripts]
 pysnobal = "pysnobal.pysnobal:run_pysnobal"
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
 
 [tool.setuptools]
 include-package-data = true
