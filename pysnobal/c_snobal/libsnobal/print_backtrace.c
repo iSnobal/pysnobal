@@ -7,6 +7,11 @@ void print_user_backtrace(void) {
     // Number of stack frames to capture
     void *buffer[100];
     int nptrs = backtrace(buffer, 100);
+    if (nptrs <= 0) {
+        fprintf(stderr, "=== Application Stack Trace unavailable (no frames) ===\n");
+        return;
+    }
+
     char **strings = backtrace_symbols(buffer, nptrs);
 
     if (strings == NULL) {
