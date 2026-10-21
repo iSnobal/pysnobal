@@ -4,9 +4,9 @@ import glob
 import sys
 
 import numpy as np
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext as build_ext
 from Cython.Build import cythonize
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 if sys.platform == "darwin":
     extra_compile_args = ["-Xpreprocessor", "-fopenmp", "-O3"]
@@ -15,9 +15,7 @@ else:
     extra_compile_args = ["-fopenmp", "-O3"]
     extra_link_args = ["-fopenmp"]
 
-sources = glob.glob(
-    "pysnobal/c_snobal/libsnobal/*.c"
-) + [
+sources = glob.glob("pysnobal/c_snobal/libsnobal/*.c") + [
     "pysnobal/c_snobal/snobal.pyx"
 ]
 
@@ -32,6 +30,7 @@ extensions = [
         ],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     )
 ]
 

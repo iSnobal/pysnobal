@@ -1,19 +1,19 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test clean-pyc clean-build help
 .DEFAULT_GOAL := help
 
 help: Makefile
-	  	@sed -n 's/^\([A-Za-z0-9_.-]*\):.*## \(.*\)$$/\t\1: \2/p' Makefile | sort | column -t -s ':'
+	@sed -n 's/^\([A-Za-z0-9_.-]*\):.*## \(.*\)$$/\1:\2/p' $(MAKEFILE_LIST) | sort | column -t -s ':'
 
-build: clean ## Build the c libraries
+build: clean ## Build the compiled libraries
 	python setup.py build_ext --inplace
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
-
-clean-c: ## Clean compiled C code
-	find . -name '*.so' -exec rm -f {} +
+clean: clean-build clean-pyc clean-test ## remove all build, test, and Python artifacts
 
 clean-build: ## Remove build artifacts
+	# Cython build artifacts
+	find . -type f -name '*.so' -delete
 	rm -fr build/
+	# Python packaging artifacts
 	rm -fr dist/
 	rm -fr .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
@@ -25,27 +25,15 @@ clean-pyc: ## Remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-clean-test: ## Remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
+clean-test: ## Remove testartifacts
 	rm -fr .pytest_cache
 
-tests: ## Run the Python tests
-	python setup.py test
+tests: install-dev ## Run the Python tests
+	pytest
 
-coverage: ## Check Python code coverage
-	coverage run --source pysnobal setup.py test
-	coverage report -m
-	coverage html
-	$(BROWSER) htmlcov/index.html
-
-docs: ## Generate Sphinx HTML documentation, including API docs
-	rm -f docs/pysnobal.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ pysnobal
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-
-install: clean ## Install the Python package in editable mode
+install: clean ## Install the package with runtime dependencies
 	python -m pip install -e .
+
+install-dev: build ## Install the package with development dependencies but no runtime dependencies
+	python -m pip install --group dev
+	python -m pip install --no-deps -e .
