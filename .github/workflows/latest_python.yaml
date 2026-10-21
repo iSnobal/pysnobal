@@ -1,0 +1,44 @@
+name: Python 3.14 and numpy > 2 check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-314-numpy-2:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-name: isnobal
+          create-args: >-
+            cython
+            ipykernel
+            numpy
+            pandas<3
+            pip
+            progressbar2
+            python<3.15
+            pyyaml
+            setuptools
+          init-shell: bash
+
+      - name: Build and test
+        run: |
+          # Install build dependencies
+          micromamba run -n isnobal pip install .
+          micromamba run -n isnobal make tests
