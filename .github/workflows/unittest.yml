@@ -1,4 +1,4 @@
-name: Unittest
+name: Build and test
 
 on:
   push:
@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unittest:
+  build-and-test:
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +63,7 @@ jobs:
         if: runner.os == 'Linux'
         env:
           CC: gcc-${{ env.GCC_VERSION }}
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: ${{ env.LINUX_YAML }}
           init-shell: bash
@@ -74,14 +74,13 @@ jobs:
         if: runner.os == 'macOS'
         env:
           CONDA_SUBDIR: osx-64
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: ${{ env.MACOS_YAML }}
           init-shell: bash
           cache-environment: true
           cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
 
-      - name: Run unittests
+      - name: Build and test
         run: |
-          # Test that the model builds
           micromamba run -n isnobal make tests
