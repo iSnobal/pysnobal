@@ -50,7 +50,7 @@ def test_check_forcing_df_missing_col(df):
 
 def test_check_forcing_df_nonuniform_timestep():
     df = get_well_formed_forcing_df()
-    df.drop(index=pd.Timestamp("2026-01-19 05:00"), inplace=True)
+    df = df.drop(index=pd.Timestamp("2026-01-19 05:00"))
 
     with pytest.raises(ValueError):
         _check_forcing_df(df)

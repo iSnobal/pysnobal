@@ -317,7 +317,9 @@ def _parse_inputs(
     _check_config(config)
 
     # rename forcing dataframe and convert degC to K
-    forcing_data_df.rename(columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL, inplace=True)
+    forcing_data_df = forcing_data_df.rename(
+        columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL
+    )
     forcing_data_df["T_a"] += utils.C_TO_K
     forcing_data_df["T_g"] += utils.C_TO_K
     forcing_data_df["T_pp"] += utils.C_TO_K
