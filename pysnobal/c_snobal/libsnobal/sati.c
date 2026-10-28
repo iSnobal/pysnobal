@@ -15,7 +15,7 @@ double sati(double tk) {
     double x;
 
     if (tk <= 0.) {
-        LOG_ERROR("Input temperature (tk): %f is less than zero", tk);
+        LOG_ERROR("Input temperature (tk): %f is less than or equal to zero", tk);
         EXIT_WITH_TRACE(EXIT_FAILURE);
     }
 
