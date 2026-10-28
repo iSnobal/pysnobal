@@ -1,7 +1,6 @@
 import numpy as np
 
-import pysnobal.defaults as defaults
-import pysnobal.utils as utils
+from pysnobal import defaults, utils
 
 
 def get_timestep_info(options, config):
@@ -105,56 +104,41 @@ def get_timestep_info(options, config):
     return params, timestep_info
 
 
-def initialize(init):
-    # create the OUTPUT_REC with additional fields and fill
-    # There are a lot of additional terms that the original output_rec does not
-    # have due to the output function being outside the C code which doesn't
-    # have access to those variables
+def initialize(init: dict) -> dict:
+    """
+    Create the expected key/values per for an OUTPUT_REC.
+
+    This initializes to the struct defined in c_snobal/h/pysnobal.h that the C code
+    writes to.
+
+    Args:
+        init: Dict with initial snowpack state and configuration values
+
+    Returns:
+        Dict with all required key/values per OUTPUT_REC
+    """
     sz = init["elevation"].shape
 
-    fields = [
-        "E_s_sum",
-        "G_0_bar",
-        "G_bar",
-        "H_bar",
-        "L_v_E_bar",
-        "M_bar",
-        "R_n_bar",
-        "T_s",
-        "T_s_0",
-        "T_s_l",
-        "cc_s",
-        "cc_s_0",
-        "cc_s_l",
-        "current_time",
-        "delta_Q_0_bar",
-        "delta_Q_bar",
-        "elevation",
-        "h2o",
-        "h2o_max",
-        "h2o_sat",
-        "h2o_total",
-        "h2o_vol",
-        "layer_count",
-        "m_s",
-        "m_s_0",
-        "m_s_l",
-        "mask",
-        "melt_sum",
-        "rho",
-        "ro_pred_sum",
-        "time_since_out",
-        "z_0",
-        "z_s",
-        "z_s_0",
-        "z_s_l",
-    ]
-    # Initialize according to the topo shape
-    s = {key: np.zeros(sz) for key in fields}
+    fields = (
+        defaults.SNOW_OUT
+        + defaults.EM_OUT
+        + [
+            "current_time",
+            "elevation",
+            "h2o_max",
+            "h2o_total",
+            "h2o_vol",
+            "layer_count",
+            "mask",
+            "time_since_out",
+            "z_0",
+        ]
+    )
 
-    # Update values from config
-    for key, val in init.items():
-        if key in fields:
-            s[key] = val
+    # Initialize with values from the init dict or with zeros if missing.
+    # Also enforce float64 C-contiguous layout for all arrays as required by do_tstep_grid.
+    s = {}
+    for field in fields:
+        s[field] = np.ascontiguousarray(init.get(field, np.zeros(sz)), dtype=np.float64)
 
     return s

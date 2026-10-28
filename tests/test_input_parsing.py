@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pysnobal.defaults as defaults
-import pysnobal.utils as utils
 import pytest
+
+from pysnobal import defaults, utils
 from pysnobal.pysnobal import (
     _check_config,
     _check_forcing_df,
@@ -13,7 +13,7 @@ from pysnobal.pysnobal import (
 
 def get_well_formed_forcing_df():
     # Create a 24-hour hourly index
-    index = pd.date_range("2026-01-19 00:00", periods=24, freq="H")
+    index = pd.date_range("2026-01-19 00:00", periods=24, freq="h")
 
     # Generate random data for each column
     # Here, using normal or uniform random distributions as placeholders
@@ -50,7 +50,7 @@ def test_check_forcing_df_missing_col(df):
 
 def test_check_forcing_df_nonuniform_timestep():
     df = get_well_formed_forcing_df()
-    df.drop(index=pd.Timestamp("2026-01-19 05:00"), inplace=True)
+    df = df.drop(index=pd.Timestamp("2026-01-19 05:00"))
 
     with pytest.raises(ValueError):
         _check_forcing_df(df)
@@ -164,9 +164,9 @@ def test_parse_inputs(case, test_data):
         assert level["level"] == i
 
         if i < len(timestep_info) - 2:
-            assert timestep_info[i]["time_step"] >= timestep_info[i]["time_step"]
+            assert level["time_step"] >= level["time_step"]
             if i > 0:
-                assert timestep_info[i]["threshold"] >= timestep_info[i]["threshold"]
+                assert level["threshold"] >= level["threshold"]
 
     for v in output_rec.values():
         assert v.ndim >= 2

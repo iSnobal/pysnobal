@@ -1,4 +1,4 @@
-name: Unittest
+name: Build and test
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
       - v*
     paths-ignore:
       - LICENSE
-      - '**.md'
-      - '**.rst'
+      - "**.md"
+      - "**.rst"
       - .gitignore
       - .editorconfig
       - .clang-format
@@ -22,11 +22,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unittest:
+  build-and-test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       GCC_VERSION: 11
@@ -63,7 +63,7 @@ jobs:
         if: runner.os == 'Linux'
         env:
           CC: gcc-${{ env.GCC_VERSION }}
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: ${{ env.LINUX_YAML }}
           init-shell: bash
@@ -74,15 +74,13 @@ jobs:
         if: runner.os == 'macOS'
         env:
           CONDA_SUBDIR: osx-64
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: ${{ env.MACOS_YAML }}
           init-shell: bash
           cache-environment: true
           cache-environment-key: conda-${{ runner.os }}-gcc_${{ env.GCC_VERSION }}-${{ hashFiles(env.MACOS_YAML) }}
 
-      - name: Run unittests
+      - name: Build and test
         run: |
-          # Test that the model builds
-          micromamba run -n isnobal make build
-          micromamba run -n isnobal pytest
+          micromamba run -n isnobal make tests

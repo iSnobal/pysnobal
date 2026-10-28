@@ -7,8 +7,7 @@ import pandas as pd
 import progressbar
 import yaml
 
-import pysnobal.defaults as defaults
-import pysnobal.utils as utils
+from pysnobal import defaults, utils
 from pysnobal.c_snobal import snobal
 
 
@@ -190,12 +189,7 @@ def _check_forcing_df(forcing_data_df: pd.DataFrame) -> float:
 
     # calculate timestep frequency in seconds
     timesteps = (
-        forcing_data_df.index.to_series()
-        .diff()
-        .dropna()
-        .unique()
-        .astype("timedelta64[s]")
-        .astype(float)
+        forcing_data_df.index.to_series().diff().dropna().dt.total_seconds().unique()
     )
     if len(timesteps) > 1:
         raise ValueError(
@@ -281,6 +275,20 @@ def _check_config(config: dict[str, Any]) -> None:
     # TODO: check to make sure tstep lengths divide evenly
 
 
+def _c_snobal_1dinput_array(value):
+    """
+    Convert a 1D input value into a 2D array with float64 dtype as expected by
+    the C code interface.
+
+    Args:
+        value: The input value.
+
+    Returns:
+        The converted 2D array with float64 dtype.
+    """
+    return np.atleast_2d(value).astype(np.float64)
+
+
 def _parse_inputs(
     forcing_data_df: pd.DataFrame, config: dict[str, Any]
 ) -> tuple[pd.DataFrame, dict, dict, list[dict], dict]:
@@ -309,7 +317,9 @@ def _parse_inputs(
     _check_config(config)
 
     # rename forcing dataframe and convert degC to K
-    forcing_data_df.rename(columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL, inplace=True)
+    forcing_data_df = forcing_data_df.rename(
+        columns=defaults.FORCING_NAMES_CUSTOM2SNOBAL
+    )
     forcing_data_df["T_a"] += utils.C_TO_K
     forcing_data_df["T_g"] += utils.C_TO_K
     forcing_data_df["T_pp"] += utils.C_TO_K
@@ -365,19 +375,19 @@ def _parse_inputs(
         )
 
     # prepare output_rec datastructure
-    mask = np.atleast_2d(1.0)
-    elevation = np.atleast_2d(config["params"]["elevation_m"])
-    roughness_length = np.atleast_2d(config["params"]["roughness_length_m"])
+    mask = _c_snobal_1dinput_array(1.0)
+    elevation = _c_snobal_1dinput_array(config["params"]["elevation_m"])
+    roughness_length = _c_snobal_1dinput_array(config["params"]["roughness_length_m"])
 
     output_rec = {"mask": mask, "elevation": elevation, "z_0": roughness_length}
 
     # add snobal state variables and EB terms
     for key in defaults.OUTPUT_NAMES_SNOBAL2CUSTOM.keys():
-        output_rec[key] = np.atleast_2d(0.0)
+        output_rec[key] = _c_snobal_1dinput_array(0.0)
 
     # initialize snow conditions
     for s in config["init"]:
-        output_rec[defaults.INIT_NAMES_CUSTOM2SNOBAL[s]] = np.atleast_2d(
+        output_rec[defaults.INIT_NAMES_CUSTOM2SNOBAL[s]] = _c_snobal_1dinput_array(
             config["init"][s]
         )
 
