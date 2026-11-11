@@ -12,7 +12,7 @@ if sys.platform == "darwin":
     extra_compile_args = ["-Xpreprocessor", "-fopenmp", "-O3"]
     extra_link_args = ["-lomp"]
 else:
-    extra_compile_args = ["-fopenmp", "-O3"]
+    extra_compile_args = ["-fopenmp", "-O3", "-march=native"]
     extra_link_args = ["-fopenmp"]
 
 sources = glob.glob("pysnobal/c_snobal/libsnobal/*.c") + [
